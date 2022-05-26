@@ -25,7 +25,7 @@ next();
 });
 
 //Static method to verify and login user 
-userSchema.statics.login = function(){
+userSchema.statics.login = function(email, password){
 
 
 };
