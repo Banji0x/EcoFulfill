@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const {isEmail} = require('validator');
 const bcrypt = require('bcrypt');
-const {Schema} = mongoose.Schema;
 
-const userSchema = new Schema({
+
+const userSchema = new mongoose.Schema({
 email:   {
          type: String,
          required: [true,"Please enter an Email address"],
@@ -16,7 +16,7 @@ password: {
          required: [true,"Please enter Password"],
          minlength: [8,"Minimum password length is 8 characters"] 
           },
-option:   {
+role:   {
           type:String, 
           required:[true,"Please select an option"],
           enum:["buyer","seller"]
@@ -34,7 +34,7 @@ next();
 
 //Static method to verify and login user 
 userSchema.statics.login = async function(email, password){
-//the findOne method checks the Db collection for the email if found, it then stores the document in the user variable.
+//the findOne method checks the Db collection for the email if found, it then stores the document as an object in the user variable.
 // "this" refers to the User model 
 const user = await this.findOne({email})
 if(user){

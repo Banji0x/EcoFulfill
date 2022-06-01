@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 // Error handling 
 const errorhandler = (err) => { 
-let errors = {email:'',password:'',option:''};
+let errors = {email:'',password:'',role:''};
 
 // Code for incorrect details while logging in
 if(err.message === 'Email not found!!!'){
@@ -23,7 +23,7 @@ return errors;
   
 // Validation errors 
 if(err.message.includes('user validation failed')){
-//err.errors is a property that holds the email,password and options key which holds thier respective errors 
+//err.errors is a property that holds the email,password and role key which holds thier respective errors 
 // Object.values returns an array 
        Object.values(err.errors).forEach(({properties})=>{
        errors[properties.path] = properties.message; 
@@ -36,9 +36,11 @@ return errors;
 //Jwt token 
 const jwtToken = (id)=>{
  //Jwt cookie expiry date 
-const maxAge = 3 * 24 * 60 * 60 ;
+const expires  = 3 * 24 * 60 * 60 ;
 //Maxage in seconds
-return jwt.sign(id,"Hybr1dTechnologies",{ expiresIn: maxAge });   
+return jwt.sign({id},"Hybr1d",{
+expiresIn: expires
+});   
 };
  
 
@@ -51,21 +53,21 @@ module.exports.login_get=(req,res)=>{
 };
 
 module.exports.register_post= async (req,res)=>{
-const {email, password,option} = req.body;
+const {email, password,role} = req.body;
 try {
-const user = await User.create({email,password,option});
-const token= jwtToken(user._id);
-             res.cookie('jwt', token,{httponly:true,maxAge:maxAge * 1000});
-             res.status(201).json({user:user._id});
+const user = await User.create({email,password,role});
+const token = jwtToken(user._id);
+res.cookie("jwt",token,{httponly:true,maxAge: 3 * 24 * 60 * 60 *1000 });
+res.status(201).json(user);
 }catch (err) {
 const errors = errorhandler(err);
-let {email,password,option} = errors;
-if(option.includes("is not a valid enum value for path")){
-             option = "Invalid Input";
+let {email,password,role} = errors;
+if(role.includes("is not a valid enum value for path")){
+             role = "Invalid option";
 }
 
-if(email.length !==0 && password.length !==0 && option.length !==0 ){
-             res.status(401).json({email, password,option});
+if(email.length !==0 && password.length !==0 && role.length !==0 ){
+             res.status(401).json({email, password,role});
 }
 else if((email.length !== 0)){ 
              res.status(400).json({email})
@@ -73,8 +75,8 @@ else if((email.length !== 0)){
 else if((password.length !==0)){
              res.status(400).json({password});
 }
-else if(option.length !==0){
-             res.status(400).json({option});
+else if(role.length !==0){
+             res.status(400).json({role});
 }
 }
 }
@@ -85,10 +87,9 @@ const { email,password } = req.body;
 
 try {
        const user = await User.login(email,password);
-       const token =  jwtToken(user._id);
-       res.cookie('jwt', token,{httponly:true,maxAge:maxAge * 1000});
-       res.status(200).json({user: user._id});
-
+       const token = jwtToken(user._id);
+       res.cookie("jwt",token,{httponly:true,maxAge: 3 * 24 * 60 * 60 *1000 });
+       res.status(201).json(user);
 } catch (err) {
        const errors = errorhandler(err);
        const {email} = errors;
