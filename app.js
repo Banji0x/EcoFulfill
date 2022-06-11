@@ -1,8 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
-const buyerRoutes = require('./routes/buyerRoutes');
-const sellerRoutes = require('./routes/sellerRoutes');
+const buyerRouters = require('./routes/buyerRouters');
+const sellerRouters = require('./routes/sellerRouters');
 const cookieparser = require('cookie-parser');
 
 const app = express();
@@ -24,18 +24,22 @@ mongoose.connect(dbUri).then(()=>{
 console.log(err);
 });
 
-app.listen(3000);
 
 //Routes 
 app.get('/api/homepage',(req,res)=>{
 res.send("Homepage");
 });
 
+//get current user
+app.get('/currentUser',(req,res)=>{
+res.json(req.cookies);
+});
+
 //authRoutes
 app.use(authRoutes);
 
 //buyer route
-app.use(buyerRoutes);
+app.use(buyerRouters);
 
 //seller route
-app.use(sellerRoutes);
+app.use(sellerRouters);

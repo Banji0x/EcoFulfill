@@ -1,105 +1,74 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const ErrorHandler = require('./ErrorHandler');     
 
-
-// Error handling 
-const errorhandler = (err) => { 
-let errors = {email:'',password:'',role:''};
-
-// Code for incorrect details while logging in
-if(err.message === 'Email not found!!!'){
-       errors.email = 'Email not registered.'   
-}
-if(err.message === 'incorrect password'){
-       errors.password = 'Password is Incorrect.Please enter the correct password.'   
-}
-  
-  
-// Code for duplicates 
-if(err.code === 11000){
-       errors.email = "Email already exists, please enter a new email address."
-return errors;
-}
-  
-// Validation errors 
-if(err.message.includes('user validation failed')){
-//err.errors is a property that holds the email,password and role key which holds thier respective errors 
-// Object.values returns an array 
-       Object.values(err.errors).forEach(({properties})=>{
-       errors[properties.path] = properties.message; 
-});
-}
-return errors;
-};      
-     
-
-//Jwt token 
-const jwtToken = (id)=>{
- //Jwt cookie expiry date 
-const expires  = 3 * 24 * 60 * 60 ;
+ //Jwt cookies expiry date in seconds 
+const expiryDate  = 3 * 24 * 60 * 60 ;
+//Jwt token for Buyer
+const jwtTokenBuyer = (_id)=>{
 //Maxage in seconds
-return jwt.sign({id},"Hybr1d",{
-expiresIn: expires
+return jwt.sign({_id},"Hybr1dBuyer",{
+expiresIn: expiryDate
 });   
 };
- 
+//Jwt token for Buyer
+const jwtTokenSeller = (_id)=>{
+return jwt.sign({_id},"Hybr1dSeller",{
+ expiresIn: expiryDate
+ });   
+ };
+      
 
-module.exports.register_get=(req,res)=>{
-
+module.exports.registerGET=(req,res)=>{
 }; 
-
-module.exports.login_get=(req,res)=>{
-
+module.exports.loginGET=(req,res)=>{
 };
 
-module.exports.register_post= async (req,res)=>{
-const {email, password,role} = req.body;
-try {
-const user = await User.create({email,password,role});
-const token = jwtToken(user._id);
-res.cookie("jwt",token,{httponly:true,maxAge: 3 * 24 * 60 * 60 *1000 });
-res.status(201).json(user);
-}catch (err) {
-const errors = errorhandler(err);
-let {email,password,role} = errors;
-if(role.includes("is not a valid enum value for path")){
-             role = "Invalid option";
-}
+module.exports.registerPOST= async (req,res)=>{
+   req.cookies = {};
+   const {name,email, password,role} = req.body;
+        try {
+          const user = await User.create({name,email,password,role});
+          if(user.role === "Buyer"){
+                 const token = jwtTokenBuyer(user._id);
+                 res.cookie("jwtBuyer",token,{httponly:true,maxAge: 3 * 24 * 60 * 60 *1000 });
+                 res.status(200).json(` ${user.role} registered successfully`);
+                 }else{
+                    const token = jwtTokenSeller(user._id);
+                    res.cookie("jwtSeller",token,{httponly:true,maxAge: 3 * 24 * 60 * 60 *1000 });
+                    res.status(200).json(` ${user.role} registered successfully`);
+                      }
+        }catch (err) {
+                  const errors = ErrorHandler(err);
+                  res.status(400).send(errors); 
+                  console.log(err);
+       }
+ };
 
-if(email.length !==0 && password.length !==0 && role.length !==0 ){
-             res.status(401).json({email, password,role});
-}
-else if((email.length !== 0)){ 
-             res.status(400).json({email})
-}
-else if((password.length !==0)){
-             res.status(400).json({password});
-}
-else if(role.length !==0){
-             res.status(400).json({role});
-}
-}
-}
+module.exports.loginPOST= async (req,res)=>{
+  req.cookies={};
+  const {email,password} = req.body;
+        try {
+          const user = await User.login(email,password);
+          if(user.role === "Buyer"){
+                 const token = jwtTokenBuyer(user._id);
+                 res.cookie("jwtBuyer",token,{httponly:true,maxAge: 3 * 24 * 60 * 60 *1000 });
+                 res.status(201).json(user);
+                 }else{
+                   const token = jwtTokenSeller(user._id);
+                   res.cookie("jwtSeller",token,{httponly:true,maxAge:  3 * 24 * 60 * 60 *1000 });
+                   res.status(201).json(user);
+                      }
+        } catch (err) {
+                 console.log(err);
+                 const errors = ErrorHandler(err);
+                 res.status(400).json(errors)
+        }
 
-module.exports.login_post= async (req,res)=>{
+ };
 
-const { email,password } = req.body;
 
-try {
-       const user = await User.login(email,password);
-       const token = jwtToken(user._id);
-       res.cookie("jwt",token,{httponly:true,maxAge: 3 * 24 * 60 * 60 *1000 });
-       res.status(201).json(user);
-} catch (err) {
-       const errors = errorhandler(err);
-       const {email} = errors;
-       const {password} = errors;
+module.exports.logoutGET = async(req,res)=>{
 
-if((email.length !== 0)){ 
-       res.status(400).json({email})}
-      
-       else if((password.length !==0)){
-       res.status(400).json({password});
-      }
-}
-}
+
+};
