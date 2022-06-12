@@ -13,7 +13,7 @@ if(err){
 }
 });
 }else{
- res.redirect('/api/auth/login')
+res.redirect('/login')
 }
 }
 

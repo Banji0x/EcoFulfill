@@ -14,7 +14,13 @@ const productSchema= new mongoose.Schema({
    description:{
       type: String,
       required: true
+   },
+   createdOn: {
+     type: String,
+     default: ()=> new Date().toString(),
+     immutable: true
    }
+
 });
 
 

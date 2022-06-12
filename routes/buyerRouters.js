@@ -8,7 +8,7 @@ const buyerRouters = Router();
 buyerRouters.get('/api/buyer',BuyerOnly,buyerControllers.buyerRouteAuth);
 buyerRouters.get('/api/buyer/list-of-sellers',BuyerOnly,buyerControllers.allSellersGET);
 
-buyerRouters.get('/api/buyer/seller-catalog',BuyerOnly,buyerControllers.allCatalogsGET);
+buyerRouters.get('/api/buyer/sellers-catalog',BuyerOnly,buyerControllers.allCatalogsGET);
 
 buyerRouters.get('/api/buyer/seller-catalog/:seller_id',BuyerOnly,buyerControllers.sellerCatalogGET);
 

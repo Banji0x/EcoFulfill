@@ -6,42 +6,43 @@ const Catalog = require('./Catalog');
 const objectID = mongoose.SchemaTypes.ObjectId;
 
 const userSchema = new mongoose.Schema({
-name:    {
-               type: String,
-               required: true,
-               lowercase: true,
-               minlength: [3,"Minimum character Length is 3 "]
-          },      
-email:   {
-               type: String,
-               required: [true,"Please Enter an Email address"],
-               unique: true,
-               lowercase: true,
-               validate: [isEmail,"Please Enter a Valid Email address"]
-         },
+name: {
+        type: String,
+        required: true,
+        lowercase: true,
+        minlength: [3,"Minimum character Length is 3 "]
+       },      
+email: {
+       type: String,
+       required: [true,"Please Enter an Email address"],
+       unique: true,
+       lowercase: true,
+       validate: [isEmail,"Please Enter a Valid Email address"]
+       },
 password: {
-               type: String,
-               required: [true,"Please Enter a Password"],
-               lowercase:true,
-               minlength: [8,"Minimum Password Length is 8 Characters"],
-               validate: [(value)=>{
-                    if(!value.includes('password')){
+       type: String,
+       required: [true,"Please Enter a Password"],
+       lowercase:true,
+       minlength: [8,"Minimum Password Length is 8 Characters"],
+       validate: [(value)=>{
+                  if(!value.includes('password')){
                     return true;
-               }
-               },
-               `The password field shouldn't contain "password" `] 
-               },
+                  }
+                  },
+               `The password field shouldn't contain "password" `
+                 ] 
+           },
 role:    {
-               type:String, 
-               required:[true,"Please select an option"],
-               enum:["Buyer","Seller"] 
-               },
+       type:String, 
+       required:[true,"Please select an option"],
+       enum:["Buyer","Seller"] 
+         },
 catalog:[{
                type: objectID, ref:'Catalog' 
         }],
 orders:[{
                type: objectID, ref:'Order'
-}]
+       }]
 });
 
 
@@ -52,14 +53,6 @@ const salt = await bcrypt.genSalt();
 this.password = await bcrypt.hash(this.password,salt);
 next();
 });
-
-// //static method to get all users
-// userSchema.statics.getSellers = async function(next){
-//      const sellers = await this.find({role: "seller"});
-//      return sellers ; 
-//      next();
-//  };
-
 
 //Static method to verify and login user 
 userSchema.statics.login = async function(email, password){

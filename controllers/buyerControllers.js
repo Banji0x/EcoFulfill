@@ -8,7 +8,7 @@ const errHandler = (err)=>{
 };
 
 module.exports.buyerRouteAuth = (req,res,next)=>{
-res.status(200).json("Buyer verified");
+    res.status(200).json(`Buyer ${req.user_id} verified`);
 };
 
 //GET REQUESTS 
@@ -33,10 +33,10 @@ module.exports.allCatalogsGET = async (req, res) => {
 }
 };
 
-module.exports.sellerCatalogGET = (req,res)=>{
+module.exports.sellerCatalogGET = async (req,res)=>{
  try {
      const sellerId = req.params.seller_id;
-     const sellerCatalog = Catalog.catalogByID(sellerId);
+     const sellerCatalog = await Catalog.catalogByID(sellerId);
      res.status(201).json(sellerCatalog);
 
  } catch (err) {

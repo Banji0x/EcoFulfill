@@ -9,16 +9,16 @@ const errHandler = (err)=>{
 };
 
 module.exports.sellerRouteAuth = (req,res,next)=>{
-    res.status(200).json("Seller verified");
+    res.status(200).json(`Seller ${req.user_id} verified`);
 };
     
 module.exports.createCatalogPOST = async (req,res)=>{
  try {
      const userID = req.user_id;
-     console.log(userID);
      const {name,price,description} = req.body;
-     await Catalog.catalogCreation(userID,name,price,description); 
-     res.status(201).json("Products added to catalog");
+     const catalog = await Catalog.catalogCreation(userID,name,price,description); 
+     res.status(201).json(`A new product has been successfully added to Seller:${userID} catalog.
+     Total number of products: ${catalog.productsCount()}`);
  } catch (err) {
      console.log(err);
      //  errHandler(err)
