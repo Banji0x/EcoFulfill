@@ -21,15 +21,17 @@ return jwt.sign({_id},"Hybr1dSeller",{
 
 module.exports.registerGET=(req,res)=>{
 }; 
+
+
 module.exports.loginGET=(req,res)=>{
+  res.status(400).json("Please Switch to POST and Login");
+
 };
 
 module.exports.registerPOST= async (req,res)=>{
    const {name,email, password,role} = req.body;
    try {
      const user = await User.create({name,email,password,role});
-       delete req.cookies.jwtBuyer;
-       delete req.cookies.jwtSeller;
        if(user.role === "Buyer"){
          const token = jwtTokenBuyer(user._id);
          res.cookie("jwtBuyer",token,{httponly:true,maxAge: 3 * 24 * 60 * 60 *1000 });

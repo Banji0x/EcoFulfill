@@ -16,11 +16,10 @@ module.exports.createCatalogPOST = async (req,res)=>{
  try {
      const userID = req.user_id;
      const {name,price,description} = req.body;
-     const catalog = await Catalog.catalogCreation(userID,name,price,description); 
-     res.status(201).json(`A new product has been successfully added to Seller:${userID} catalog.
-     Total number of products: ${catalog.productsCount()}`);
+     const catalog = await Catalog.catalogCreation(userID,name,price,description);
+     res.status(201).json(catalog);
  } catch (err) {
-     console.log(err);
+     console.log(err.message);
      //  errHandler(err)
     }
 };

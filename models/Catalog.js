@@ -1,9 +1,32 @@
 const mongoose = require('mongoose');
 const User = require('./User');
 // const Order = require('./Order');
-const Products = require('./Products');
 const objectID = mongoose.SchemaTypes.ObjectId;
 
+const productSchema= new mongoose.Schema({
+     name:{
+       type: String,
+       required: true,
+       lowercase: true,
+       trim: true
+     },
+     price:{
+       type: Number,
+       required: true
+     },
+    description:{
+       type: String,
+       required: true,
+       lowercase: true,
+    },
+    createdOn: {
+      type: String,
+      default: ()=> new Date().toString(),
+      immutable: true
+    }
+ 
+ });
+ 
 
 const catalogSchema = new mongoose.Schema({
     seller: {
@@ -11,60 +34,44 @@ const catalogSchema = new mongoose.Schema({
          required: true,
          ref: 'user'
     },
-    products: [{
-         type: objectID,
-         required: true,
-         ref: Products
-    }]
+    products: [productSchema]
     });
     
 //static method to push products to a new/existing catalog. 
 catalogSchema.statics.catalogCreation = async function(userID,name,price,description){
-const catalog = await this.findOne({seller:userID});
+let catalog = await this.findOne({seller:userID});
       if(!catalog){
-           const newProduct = await Products.create({name,price,description});
-           const catalog = new Catalog({seller:userID,products:newProduct._id});
-           await catalog.save();
+           catalog = await Catalog.create({
+           seller:userID,
+           products:[{name,price,description}]
+           });
       }else{
-           const newProduct = await Products.create({name,price,description});
-           catalog.products.push(newProduct);
-           catalog.save();
-     }
-     return catalog;
+           catalog.seller=userID;
+           catalog.products.push({name,price,description});
+           await catalog.save(); 
+          }
+       return catalog;
    };
-
-//method to get the products count in a catalog 
-catalogSchema.methods.productsCount= function(){
-      return this.products.length; 
-};
-
 
 //static method to get all Catalogs 
 catalogSchema.statics.allCatalogs = async function(){
-     
 const catalogs = await this.find()
-      .populate({path:'seller',select: 'name -_id'})
-      .populate({path:'products',select: 'name price -_id'})
+      .populate({path:'seller', select:'_id name'})
       .select('seller products -_id')
-
-if(catalogs.length===0){
-     throw new Error("No catalog was found")
-}
-     return catalogs;
+      return catalogs;
 };
 
 //static method to get the Catalog of a particular user.
 catalogSchema.statics.catalogByID = async function(sellerId){
 const sellerCatalog = await Catalog.findOne({seller:sellerId})
-           .populate({
-           path: "products",
-           select:"name price description createdOn -_id"})
-           .select('seller products -_id');
+      .populate({path:'seller', select:'_id name'})
+      .select('seller products -_id');
       if(!sellerCatalog){
       throw new Error("Seller Catalog not found");
       }
 return sellerCatalog; 
 };
+
 
 
 const Catalog = mongoose.model('catalog',catalogSchema);

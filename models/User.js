@@ -52,7 +52,7 @@ userSchema.pre("save", async function(next){
 const salt = await bcrypt.genSalt();
 this.password = await bcrypt.hash(this.password,salt);
 next();
-});
+ });
 
 //Static method to verify and login user 
 userSchema.statics.login = async function(email, password){
@@ -73,7 +73,7 @@ if(!validation){
 
 //static method to get all Sellers id && name. 
 userSchema.statics.allSellers = async function(){
-      const sellers = await this.find({role: 'Seller'}).select('name email ');  
+      const sellers = await this.find({role: 'Seller'}).select('name email');  
       return sellers;
      };
 

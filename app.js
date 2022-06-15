@@ -4,9 +4,7 @@ const authRoutes = require('./routes/authRoutes');
 const buyerRouters = require('./routes/buyerRouters');
 const sellerRouters = require('./routes/sellerRouters');
 const cookieparser = require('cookie-parser');
-
 const app = express();
-
 
 //middleware
 app.use(express.json());

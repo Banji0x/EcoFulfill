@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const BuyerOnly = async(req,res,next)=>{
 const encodedToken = req.cookies.jwtBuyer;
 if(encodedToken){
-await jwt.verify(encodedToken,"Hybr1dBuyer",(err,decodedToken)=>{
+jwt.verify(encodedToken,"Hybr1dBuyer",(err,decodedToken)=>{
 if(err){
    console.log(err)
    res.redirect('/api/auth/login')
@@ -13,7 +13,7 @@ if(err){
 }
 });
 }else{
-res.redirect('/login')
+res.redirect('/api/auth/register')
 }
 }
 

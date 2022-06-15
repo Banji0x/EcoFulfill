@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "dev":"nodemon app.js"
+    "dev": " env-cmd -f ./config/dev.env nodemon app.js"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +12,7 @@
   "dependencies": {
     "bcrypt": "^5.0.1",
     "cookie-parser": "^1.4.6",
+    "env-cmd": "^10.1.0",
     "jsonwebtoken": "^8.5.1",
     "validator": "^13.7.0"
   }
