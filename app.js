@@ -1,43 +1,39 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const authRoutes = require('./routes/authRoutes');
-const buyerRouters = require('./routes/buyerRouters');
-const sellerRouters = require('./routes/sellerRouters');
 const cookieparser = require('cookie-parser');
 const app = express();
+const authRoute = require('./routes/authRoute');
+const buyerRoute = require('./routes/buyerRoute');
+const sellerRoute = require('./routes/sellerRoute');
 
 //middleware
 app.use(express.json());
 app.use(cookieparser());
 
-//database connection 
-const dbUri = "mongodb://localhost/RestApiDB";
-const PORT = 3005;
-mongoose.connect(dbUri).then(()=>{ 
-    console.log("connected to mongoDB");
-    app.listen(PORT,()=>{
-    console.log("Server is running");
-    })})
-    .catch(err=>{
-console.log(err);
+// database connection
+const PORT = process.env.PORT || 3000;
+const DBURI = process.env.DBURI
+
+mongoose.connect(DBURI, { useNewUrlParser: true, useUnifiedTopology: true }, () => {
+      app.listen(PORT, () => { console.log(` Connected to MongoDb and server is running on PORT: ${PORT}`) })
 });
 
-
-//Routes 
-app.get('/api/homepage',(req,res)=>{
-res.send("Homepage");
+//Routes
+app.get('/api/homepage', (req, res) => {
+      res.send("Welcome to the homepage")
 });
-
 //get current user
-app.get('/currentUser',(req,res)=>{
-res.json(req.cookies);
+app.get('/currentUser', (req, res) => {
+      res.json(req.cookies);
 });
-
 //authRoutes
-app.use(authRoutes);
-
+app.use(authRoute);
 //buyer route
-app.use(buyerRouters);
-
+app.use(buyerRoute);
 //seller route
-app.use(sellerRouters);
+app.use(sellerRoute);
+
+
+
+

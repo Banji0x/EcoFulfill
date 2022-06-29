@@ -1,38 +1,39 @@
 const jwt = require('jsonwebtoken');
 
-const BuyerOnly = async(req,res,next)=>{
-const encodedToken = req.cookies.jwtBuyer;
-if(encodedToken){
-jwt.verify(encodedToken,"Hybr1dBuyer",(err,decodedToken)=>{
-if(err){
-   console.log(err)
-   res.redirect('/api/auth/login')
-}else{
-   req.user_id = decodedToken._id;
-   next();
-}
-});
-}else{
-res.redirect('/api/auth/register')
-}
-}
+//Unauthorized user will automatically be redirected.
+//Buyeronly route protection
+const BUYERONLY = async (req, res, next) => {
+    const encodedToken = req.cookies.AUTHTOKEN
+    if (encodedToken) {
+        await jwt.verify(encodedToken, process.env.JWTBUYERSECRET, (err, decodedToken) => {
+            if (err) {
+                res.redirect('api/auth/login');
+            } else {
+                req.userID = decodedToken._id;
+                next();
+            }
+        })
+    } else {
+        res.redirect('/api/auth/register')
+    }
+};
 
-const SellerOnly = async(req,res,next)=>{
-    const encodedToken = req.cookies.jwtSeller;
-    if(encodedToken){
-    await jwt.verify(encodedToken,"Hybr1dSeller",(err,decodedToken)=>{
-    if(err){
-      console.log(err)
-      res.redirect('/api/auth/login')
-    }else{
-       req.user_id = decodedToken._id;
-       next();
+//Selleronly route protection
+const SELLERONLY = async (req, res, next) => {
+    const encodedToken = req.cookies.AUTHTOKEN;
+    if (encodedToken) {
+        await jwt.verify(encodedToken, process.env.JWTSELLERSECRET, (err, decodedToken) => {
+            if (err) {
+                res.redirect('/api/auth/login');
+            } else {
+                req.userID = decodedToken._id;
+                next();
+            }
+        })
+    } else {
+        res.redirect('/api/auth/register')
     }
-    });
-    }else{
-     res.redirect('/api/auth/login')
-    }
-    
-    }
+};
 
-module.exports = {SellerOnly,BuyerOnly};
+// Exports 
+module.exports = { BUYERONLY, SELLERONLY };

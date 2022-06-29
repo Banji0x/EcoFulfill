@@ -1,31 +1,62 @@
-// Error handler 
-const ErrorHandler = (err) => { 
-    let errors = {name: '',email:'',password:'',role:''};
-    
-    // Code for incorrect details while logging in
-    if(err.message === 'Email not found!!!'){
-           errors.email = 'Email not registered.'   
-    }
-    if(err.message === 'Incorrect password!!!'){
-           errors.password = 'Password is incorrect.Please enter the correct password.'   
-    }
-     
-      
+const errHandler = (err) => {
+
+    let error = '';
     // Code for duplicates while registering 
-    if(err.code === 11000){
-           errors.email = "Email already exists, please enter a new email address."
-    return errors;
+    //User model error message
+    if (err.code === 11000) {
+        error = "User already exists, please input a new email address."
+        return error;
     }
-      
-    // Validation errors while logging in
-    if(err.message.includes('user validation failed')){
-    //err.errors is a property that holds the email,password and role key which holds their respective errors 
-    // Object.values returns an array 
-           Object.values(err.errors).forEach(({properties})=>{
-           errors[properties.path] = properties.message; 
-    });
+
+    switch (err.message) {
+        //User model error messages
+        case 'Email has not been registered.':
+            error = err.message
+            break;
+        case 'Password entered is incorrect.':
+            error = err.message
+            break;
+        case 'Password entered is incorrect.':
+            error = err.message
+            break;
+        //Catalog model error messages 
+        case 'Seller not found.':
+            error = err.message
+            break;
+        case `Seller doesn't have a catalog.`:
+            error = err.message
+            break;
+        case `Catalog not found.`:
+            error = err.message
+            break;
+        case `Item not in seller catalog.`:
+            error = err.message
+            break;
+        //Cart model error messages
+        case `Buyer doesn't have a cart.`:
+            error = err.message
+            break;
+        case 'Item is not in buyer cart.':
+            error = err.message
+            break;
+        case `Buyer doesn't have a cart.`:
+            error = err.message
+            break;
+        case 'Seller not found':
+            error = err.message
+
+        //order model error messages
+        case 'Seller not found':
+            error = err.message
+            break;
+        case 'Seller not found':
+            error = err.message
+            break;
+        case 'Seller not found':
+            error = err.message
+            break;
     }
-    return errors;
-    };      
-    
-    module.exports = ErrorHandler
+    return error;
+};
+
+module.exports = errHandler;

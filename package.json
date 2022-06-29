@@ -1,19 +1,25 @@
 {
-  "name": "auth_project",
+  "name": "rest-api-for-ecommerce",
   "version": "1.0.0",
-  "description": "",
+  "description": "Representational State Transfer (REST) API for an Ecommerce Website",
   "main": "app.js",
   "scripts": {
-    "dev": " env-cmd -f ./config/dev.env nodemon app.js"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon app.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^5.0.1",
+    "argon2": "^0.28.5",
     "cookie-parser": "^1.4.6",
-    "env-cmd": "^10.1.0",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "express-validator": "^6.14.2",
     "jsonwebtoken": "^8.5.1",
-    "validator": "^13.7.0"
+    "mongoose": "^6.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.16"
   }
 }

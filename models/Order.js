@@ -1,58 +1,56 @@
 const mongoose = require('mongoose');
-const User = require('./User');
 const Catalog = require('./Catalog');
-const objectID = mongoose.SchemaTypes.ObjectId;
 
-const orders = new mongoose.Schema({
-   productID:{
-      type:objectID,
-      required:true,
-      ref: 'Catalog'
-     },
-   quantity:{
+const orderSchema = new mongoose.Schema({
+  buyerID: {
+    type: mongoose.SchemaTypes.ObjectId,
+    ref: 'user'
+  },
+  products: [{
+    productID: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'catalog'
+    },
+    quantity: {
       type: Number,
-      required:true
-     },
-   total:{
+      default: 1
+    },
+    bill: {
       type: Number,
-      required:true
-     }
-}); 
+      required: true
+    },
+  }]
+},
+  { timestamps: true });
 
-
- const orderSchema = new mongoose.Schema({
-       buyerID: {
-         type: objectID,
-         required:true,
-         lowercase: true,
-         ref : 'user'
-         },
-       orders: [orders] 
- });
-
- async function findProduct(sellerID,name){
- const sellerCatalog = await Catalog.findOne({seller: sellerID});
- if(sellerCatalog){
- const findItem = sellerCatalog.products.find((item)=>{
- return item.name === name
- });
- if (!findItem) {
-   throw new Error(`Item not in Seller: ${sellerID} catalog`)
- }
- return findItem;
- }else{
-  throw new Error(`${sellerID} not a valid Seller`);
- }
-
-}
-
-
-orderSchema.statics.createOrder = async function(buyerID,sellerID,name, quantity){
-   const product = await findProduct(sellerID,name);
-   const order = await Order.create({buyerID,orders:{productID:product._id,quantity:quantity,total:product.price * quantity}});
-   return order;
+  //work on this, it needs to be pushed to the seller
+orderSchema.statics.getOrders = async function (buyerID) {
+  const order = await this.findOne({ buyerID });
+  if (!order) throw new Error(`Buyer doesn't have any order.`);
+  return order;
 };
 
-const Order = mongoose.model('order',orderSchema);
 
-module.exports = Order;
+orderSchema.statics.createOrder = async function (buyerID, sellerID, name, quantity = 0) {
+  const catalog = await Catalog.retrieveCatalog(sellerID);
+  const productIndex = await Catalog.retrieveProductIndex(name);
+  const product = catalog.products[productIndex];
+  if (quantity > product.quantity || product.quantity === 0) {
+    throw new Error('Insufficient product quantity')
+  };
+  //order created
+  const order = await this.create({ buyerID, products: [{ productID: product._id, quantity, bill: product.bill }] });
+  return order;
+};
+
+orderSchema.statics.deleteOrder = async function(buyerID){
+  const order = await this.exists({ buyerID });
+  if (!order) throw new Error(`Buyer doesn't have any order.`);
+  await this.deleteOne({ buyerID });
+};
+
+
+
+
+// Exporting the mongoose model 
+module.exports = mongoose.model('order', orderSchema);
