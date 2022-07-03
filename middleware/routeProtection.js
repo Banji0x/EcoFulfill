@@ -5,9 +5,9 @@ const jwt = require('jsonwebtoken');
 const BUYERONLY = async (req, res, next) => {
     const encodedToken = req.cookies.AUTHTOKEN
     if (encodedToken) {
-        await jwt.verify(encodedToken, process.env.JWTBUYERSECRET, (err, decodedToken) => {
+         jwt.verify(encodedToken, process.env.JWTBUYERSECRET, (err, decodedToken) => {
             if (err) {
-                res.redirect('api/auth/login');
+                res.redirect('/api/auth/register');
             } else {
                 req.userID = decodedToken._id;
                 next();
@@ -22,7 +22,7 @@ const BUYERONLY = async (req, res, next) => {
 const SELLERONLY = async (req, res, next) => {
     const encodedToken = req.cookies.AUTHTOKEN;
     if (encodedToken) {
-        await jwt.verify(encodedToken, process.env.JWTSELLERSECRET, (err, decodedToken) => {
+         jwt.verify(encodedToken, process.env.JWTSELLERSECRET, (err, decodedToken) => {
             if (err) {
                 res.redirect('/api/auth/login');
             } else {
@@ -34,6 +34,7 @@ const SELLERONLY = async (req, res, next) => {
         res.redirect('/api/auth/register')
     }
 };
+
 
 // Exports 
 module.exports = { BUYERONLY, SELLERONLY };

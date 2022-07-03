@@ -7,8 +7,14 @@ const catalogSchema = new mongoose.Schema({
     ref: "user"
   },
   products: [{
-    name: String,
-    price: Number,
+    name: {
+      type: String,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
     quantity: Number,
     category: {
       type: String,
@@ -27,6 +33,15 @@ catalogSchema.statics.allCatalogs = async function () {
   return catalogs;
 };
 
+//method to retrieve a product Index from the catalog
+catalogSchema.methods.retrieveProductIndex = async function (name) {
+  const productIndex = await this.products.findIndex(product => product.name === name);
+  if (productIndex === -1) throw new Error('Item not in seller catalog.');
+  return productIndex;
+};
+
+//static method to retrieve a sell
+
 //static method to retrieve a seller's catalog
 catalogSchema.statics.retrieveCatalog = async function (sellerID) {
   const catalog = await this.findOne({ seller: sellerID });
@@ -35,28 +50,20 @@ catalogSchema.statics.retrieveCatalog = async function (sellerID) {
 };
 
 //static method to retrieve the seller's Catalog 
-catalogSchema.statics.getSellerCatalog = async function (sellerID) {
+catalogSchema.statics.getSellerCatalogById = async function (sellerID) {
   const user = await User.findById(sellerID);
-  if (!user || user.role !== 'Seller') throw new Error('Seller not found.');
-  const catalog = await this.retrieveCatalog(sellerID)
-    .populate({ path: 'seller', select: '_id name' })
+  if (!user || user.role !== 'seller') throw new Error('Seller not found.');
+  const catalog = await this.findOne({ seller: sellerID })
     .select('seller products -_id');
   return catalog;
 };
 
-//method to retrieve a product Index from the catalog
-catalogSchema.methods.retrieveProductIndex = async function (name) {
-  const productIndex = await this.products.findIndex(product => product.name === name);
-  if (productIndex === -1) throw new Error('Item not in seller catalog.');
-  return productIndex;
-};
-
 //static method to push products to a new/existing catalog.
-catalogSchema.statics.createCatalog = async function (sellerID, name, price, quantity = 1, description) {
+catalogSchema.statics.createCatalog = async function (sellerID, name, price, quantity, description) {
   const catalog = await this.findOne({ seller: sellerID });
   //if catalog exists
   if (catalog) {
-    const productIndex = this.products.findIndex(product => product.name === name);
+    const productIndex = catalog.products.findIndex(product => product.name === name);
     //if the product doesn't exist, add it to the catalog
     if (productIndex === -1) {
       catalog.products.push({ name, price, quantity, description });
@@ -65,24 +72,23 @@ catalogSchema.statics.createCatalog = async function (sellerID, name, price, qua
     return catalog;
   } else {
     //if catalog doesn't exist
-    const newCatalog = await this.create({ seller: sellerID, products: [{ name, price, description }] })
-    User.findById(sellerID).then(async function (err, user) {
-      if (err) console.log(err.message);
-      user.catalog = newCatalog._id;
-      await user.save();
+    const newCatalog = await this.create({ seller: sellerID, products: [{ name, price, quantity, description }] })
+    User.findById(sellerID).then(async res => {
+      res.catalog.push(newCatalog._id);
+      await res.save();
     })
     return newCatalog;
   }
 };
 
 //static method to update products in a catalog
-catalogSchema.statics.updateCatalog = async function (sellerID, name, price = 0, quantity = 0) {
+catalogSchema.statics.updateCatalog = async function (sellerID, name, price, quantity) {
   const catalog = await this.retrieveCatalog(sellerID);
   const productIndex = await catalog.retrieveProductIndex(name);
   const product = catalog.products[productIndex];
   product.name = name;
-  product.price += price;
-  product.quantity += quantity;
+  product.quantity = parseInt(quantity);
+  product.price = parseInt(price);
   catalog.products[productIndex] = product;
   await catalog.save();
   return catalog;
@@ -106,4 +112,4 @@ catalogSchema.statics.deleteCatalog = async function (sellerID) {
 };
 
 // Exporting the mongoose model 
-module.exports = mongoose.model('catalog', catalogSchema);;
+module.exports = mongoose.model('catalog', catalogSchema);

@@ -1,6 +1,7 @@
 const errHandler = (err) => {
 
-    let error = '';
+    let error;
+
     // Code for duplicates while registering 
     //User model error message
     if (err.code === 11000) {
@@ -19,6 +20,8 @@ const errHandler = (err) => {
         case 'Password entered is incorrect.':
             error = err.message
             break;
+        case `User isn't logged in.`:
+            error = err.message
         //Catalog model error messages 
         case 'Seller not found.':
             error = err.message
@@ -39,14 +42,14 @@ const errHandler = (err) => {
         case 'Item is not in buyer cart.':
             error = err.message
             break;
-        case `Buyer doesn't have a cart.`:
+        case `Seller doesn't have up to the required quantity.`:
             error = err.message
             break;
-        case 'Seller not found':
+        case 'Quantity must be greater than zero':
             error = err.message
 
         //order model error messages
-        case 'Seller not found':
+        case `Buyer doesn't have any order.`:
             error = err.message
             break;
         case 'Seller not found':
@@ -56,6 +59,13 @@ const errHandler = (err) => {
             error = err.message
             break;
     }
+
+    //Returning the validationResult from the express-validator package
+    if (err.errors !== undefined) {
+        error = err
+        return error;
+    };
+
     return error;
 };
 

@@ -14,19 +14,21 @@ const userSchema = new mongoose.Schema({
             default: "buyer",
             enum: ["buyer", "seller"]
       },
-      catalog: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'Catalog' }],
-      orders: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'Order' }]
+      catalog: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'catalog' }],
+      orders: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'order' }]
 });
 
-//mongoose pre hook 
+//mongoose pre hook.
 userSchema.pre('save', async function () {
       this.password = await argon2.hash(this.password);
+      this.name = this.name.toLowerCase();
 });
 
 // method to automatically generateJwtToken.
 userSchema.methods.generateJwtToken = async function () {
-      if (this.role === "Buyer") {
+      if (this.role === "buyer") {
             return jwt.sign({ _id: this._id.toString() }, process.env.JWTBUYERSECRET);
+
       } else {
             return jwt.sign({ _id: this._id.toString() }, process.env.JWTSELLERSECRET);
       }
@@ -44,17 +46,24 @@ userSchema.statics.login = async function (email, password) {
 
 };
 
+
 //static method to get all Sellers id && name. 
 userSchema.statics.allSellers = async function () {
-      const sellers = await this.find({ role: 'Seller' })
+      const sellers = await this.find({ role: 'seller' })
             .select('name email');
       return sellers;
 };
 
-userSchema.statics.getOrders = async function (sellerID) {
-      const seller = await this.findById(sellerID);
-      seller.or
+userSchema.statics.retrieveOrders = async function (sellerID) {
+      const orders = await this.findById(sellerID)
+            .populate({ path: 'orders', select: 'buyerID products -products["bill"] -_id' })
+            .select('name orders');
+      return orders
+};
 
+userSchema.statics.deleteAccount = async function (userID) {
+      const x = await this.exists({ _id: userID });
+      await this.deleteOne({ _id: userID });
 };
 
 // Exporting the mongoose model 

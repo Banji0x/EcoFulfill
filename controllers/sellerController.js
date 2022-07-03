@@ -1,18 +1,18 @@
 const User = require('../models/User');
 const Catalog = require('../models/Catalog');
-const validateInput = require('../middleware/validateInput');
-const errorHandler = require('../controllers/errorHandler')
+const errorHandler = require('../controllers/errorHandler');
+const { validationResult } = require('express-validator');
 
 module.exports.sellerRouteAuth = (req, res) => {
-    res.status(200).json(`Seller ${req.user_id} verified`);
+    res.status(200).json(`Seller ${req.userID} verified`);
 };
 
 //GET REQUESTS 
 module.exports.ordersListGET = async (req, res) => {
     //gets the list of orders a seller has && the buyerID
+    const sellerID = req.userID;
     try {
-        const buyerID = req.userID;
-        const orders = await User.getOrders(buyerID);
+        const orders = await User.retrieveOrders(sellerID);
         console.log(orders)
         res.status(200).json(orders);
     } catch (err) {
@@ -20,44 +20,55 @@ module.exports.ordersListGET = async (req, res) => {
     }
 };
 
+module.exports.sellerCatalogGET = async (req, res) => {
+    const sellerID = req.userID;
+    try {
+        const catalog = await Catalog.getSellerCatalogById(sellerID);
+        res.status(200).send(catalog);
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send("Internal Server Error");
+    }
+};
+
 //POST REQUESTS
-module.exports.createCatalogPOST = async (req, res, next) => {
+module.exports.createCatalogPOST = async (req, res) => {
     //pushes products to existing/new catalog
-    validateInput(req, res, next);
     const sellerID = req.userID;
     const { name, price, quantity, description } = req.body;
     try {
+        validationResult(req).throw();
         const catalog = await Catalog.createCatalog(sellerID, name, price, quantity, description);
         res.status(201).json(catalog);
     } catch (err) {
-        res.status(500).json('Internal server error');
-        console.error(err.message);
+        const error = errorHandler(err);
+        res.status(500).json(error);
     }
 };
 
 //PUT REQUESTS
-module.exports.updateCatalogPUT = async function (req, res, next) {
+module.exports.updateCatalogPUT = async function (req, res) {
     //updates products in catalog
-    validateInput(req, res, next);
     const sellerID = req.userID;
     const { name, price, quantity, description } = req.body;
     try {
+        validationResult(req).throw();
         const updatedCatalog = await Catalog.updateCatalog(sellerID, name, price, quantity, description);
         res.status(200).json(updatedCatalog);
     } catch (err) {
         const error = errorHandler(err);
         res.status(403).json(error);
-        console.error(err.message);
     }
 
 };
 
 //DELETE REQUESTS
-module.exports.deleteProductFromCatalog = async function (req, res, next) {
+module.exports.deleteProductFromCatalog = async function (req, res) {
     try {
+        validationResult(req).throw();
         const sellerID = req.userID;
-        const { name } = req.params;
-        await Catalog.deleteProduct(sellerID, name)
+        const { productName } = req.params;
+        await Catalog.deleteProduct(sellerID, productName.toLowerCase())
         res.status(200).send("Product deleted successfully")
     } catch (err) {
         const error = errorHandler(err);
@@ -65,9 +76,9 @@ module.exports.deleteProductFromCatalog = async function (req, res, next) {
         console.error(err.message);
     }
 
-}
+};
 
-module.exports.deleteCatalogDELETE = async function (req, res, next) {
+module.exports.deleteCatalogDELETE = async function (req, res) {
     try {
         const sellerID = req.userID;
         await Catalog.deleteCatalog(sellerID);
@@ -78,5 +89,5 @@ module.exports.deleteCatalogDELETE = async function (req, res, next) {
         console.error(err.message);
     }
 
-}
+};
 

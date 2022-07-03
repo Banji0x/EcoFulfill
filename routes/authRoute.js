@@ -39,6 +39,7 @@ authRoute.post('/api/auth/register',
         // .isStrongPassword()
         // .withMessage('Password must be a strong password')
     ], authController.registerPOST);
+
 authRoute.post('/api/auth/login',
     [
         check('email')
@@ -46,6 +47,8 @@ authRoute.post('/api/auth/login',
     ]
     , authController.loginPOST);
 
+//DELETE REQUESTS
+authRoute.delete('/api/auth/delete',authController.deleteAccountDELETE)
 
 //EXPORTS
 module.exports = authRoute; 

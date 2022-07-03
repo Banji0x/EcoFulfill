@@ -2,8 +2,8 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const Catalog = require('../models/Catalog');
 const Cart = require('../models/Cart');
-const validateInput = require('../middleware/validateInput');
 const errHandler = require('../controllers/errorHandler');
+const { validationResult } = require('express-validator');
 
 module.exports.buyerRouteAuth = (req, res) => {
     res.status(200).json(`Buyer: ${req.userID} verified`);
@@ -34,9 +34,9 @@ module.exports.allCatalogsGET = async (req, res) => {
 
 module.exports.sellerCatalogGET = async (req, res) => {
     //get the catalog of a seller using the seller ID
+    const { sellerID } = req.params;
     try {
-        const { sellerID } = req.params;
-        const sellerCatalog = await Catalog.getcatalogByID(sellerID);
+        const sellerCatalog = await Catalog.getSellerCatalogById(sellerID);
         res.status(201).json(sellerCatalog);
     } catch (err) {
         const error = errHandler(err);
@@ -46,14 +46,14 @@ module.exports.sellerCatalogGET = async (req, res) => {
 };
 
 module.exports.cartGET = async (req, res) => {
+    const buyerID = req.userID;
+
     try {
-        const buyerID = req.user_id;
         const cart = await Cart.retrieveCart(buyerID);
         res.status(201).send(cart);
     } catch (err) {
         const error = errHandler(err);
         res.status(404).json(error);
-        console.error(err);
     }
 }
 
@@ -63,21 +63,32 @@ module.exports.ordersGET = async (req, res) => {
         const orders = await Order.getOrders(buyerID);
         res.status(201).json(orders);
     } catch (err) {
-        console.log(err.message);
         const error = errHandler(err);
         res.status(404).json(error);
     }
 };
 
 //POST REQUESTS
-module.exports.createCartPOST = async (req, res, next) => {
-    validateInput(req, res, next);
+module.exports.createCartPOST = async (req, res) => {
+    const buyerID = req.userID;
+    const { sellerID } = req.params;
+    const { name, quantity } = req.body
     try {
-        const buyerID = req.userID;
-        const { sellerID } = req.params;
-        const { name, quantity } = req.body
+        validationResult(req).throw();
         const cart = await Cart.cartCreation(buyerID, sellerID, name, quantity);
         res.status(201).json(cart);
+    } catch (err) {
+        const error = errHandler(err);
+        res.status(404).json(error);
+    }
+};
+
+module.exports.createOrderUsingCart = async function (req, res) {
+    const buyerID = req.userID;
+    try {
+        validationResult(req).throw();
+        const order = await Cart.pushCart(buyerID);
+        res.status(201).json(order);
     } catch (err) {
         console.log(err.message);
         const error = errHandler(err);
@@ -85,16 +96,17 @@ module.exports.createCartPOST = async (req, res, next) => {
     }
 };
 
+//send products directly to the seller without adding to cart.
 module.exports.createOrderPOST = async (req, res) => {
-    validateInput(req, res, next);
+    const buyerID = req.userID;
+    const sellerID = req.params.sellerID
+    const { name, quantity } = req.body
     try {
-        const buyerID = req.userID;
-        const { sellerID } = req.params;
-        const { name, quantity } = req.body
+        validationResult(req).throw();
         const order = await Order.createOrder(buyerID, sellerID, name, quantity);
-        res.status(201).json(order);
+        res.status(201).send("Order created successfully");
     } catch (err) {
-        console.log(err.message);
+        console.log(err);
         const error = errHandler(err);
         res.status(404).json(error);
     }
@@ -105,20 +117,22 @@ module.exports.updateCartPUT = async (req, res) => {
     const buyerID = req.userID
     const { name, quantity } = req.body;
     try {
-        const updatedCart = Cart.updateCart(buyerID, name, quantity);
+        validationResult(req).throw();
+        const updatedCart = await Cart.updateCart(buyerID, name, quantity);
         res.status(200).json(updatedCart);
     } catch (err) {
-        console.log(err.message);
+        console.log(err);
         const error = errHandler(err);
         res.status(404).json(error);
     }
+
 };
 
 // DELETE REQUESTS
 module.exports.productInCartDELETE = async (req, res) => {
+    const buyerID = req.userID;
+    const productID = req.params.productId;
     try {
-        const buyerID = req.userID;
-        const productID = req.params.productId;
         const cart = await Cart.deleteProductInCart(buyerID, productID);
         res.status(201).json(cart);
     } catch (err) {
@@ -134,16 +148,20 @@ module.exports.cartDELETE = async (req, res) => {
         await Cart.deleteCart(buyerID);
         res.status(200).send('Cart deleted successfully');
     } catch (err) {
-        res.status(500).send("Internal Server Error");
+        const error = errHandler(err);
+        res.status(500).json(error);
     }
 };
 
 module.exports.orderDELETE = async (req, res) => {
     const buyerID = req.userID;
     try {
-        await deleteOrder(buyerID);
+        await Order.deleteOrder(buyerID);
         res.status(200).send('Order deleted successfully');
     } catch (err) {
+        console.log(err.message);
         res.status(500).send("Internal Server Error");
     }
 };
+
+
