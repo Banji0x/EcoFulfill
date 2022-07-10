@@ -1,15 +1,14 @@
 const mongoose = require('mongoose');
 const Catalog = require('./Catalog');
 const Order = require('./Order');
-const User = require('./User');
 const cartSchema = new mongoose.Schema({
-    buyerID: {
+    buyerId: {
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'user'
     },
     products:
         [{
-            productID: {
+            productId: {
                 type: mongoose.SchemaTypes.ObjectId,
                 required: true,
                 ref: 'Catalog',
@@ -21,40 +20,37 @@ const cartSchema = new mongoose.Schema({
     bill: Number
 });
 
-cartSchema.methods.getSeller = async function (productID) {
-    const sellerID = Catalog
-        .findOne({ "products._id": productID })
-        .then(catalog => {
-            return catalog.seller;
-        })
-    return sellerID;
+//static method to get seller's catalog using the product Id.
+cartSchema.methods.getCatalog = async function (productId) {
+    const catalog = await Catalog
+        .findOne({ 'products._id': productId })
+    return catalog;
 };
 
-
-
 //static method to get the cart of the buyer that's currently logged in 
-cartSchema.statics.retrieveCart = async function (buyerID) {
-    const cart = await this.findOne({ buyerID });
+cartSchema.statics.retrieveCart = async function (buyerId) {
+    const cart = await this.findOne({ buyerId });
     if (!cart || cart.products.length === 0) throw new Error(`Buyer doesn't have a cart.`);
     return cart;
 };
 
 //static method that creates a cart || adds products to a cart once the product legibility has been confirmed
-cartSchema.statics.cartCreation = async function (buyerID, sellerID, name, quantity) {
-    const catalog = await Catalog.retrieveCatalog(sellerID);
-    const cart = await this.findOne({ buyerID });
-    const productIndex = await catalog.retrieveProductIndex(name);
+cartSchema.statics.cartCreation = async function (buyerId, sellerId, productId, quantity) {
+    const catalog = await Catalog.retrieveCatalog(sellerId);
+    const cart = await this.findOne({ buyerId });
+    //to confirm if the product exists 
+    const productIndex = await catalog.retrieveProductIndex(productId);
     const product = catalog.products[productIndex];
-    //to also make sure the quantity is not higher than the available quantity.
-    if (quantity > product.quantity) throw new Error("Seller doesn't have up to the required quantity.");
+    //to verify if the seller available quantity is higher than the quantity the buyer wants to purchase.
+    if (quantity > product.quantity) throw new Error(`Seller doesn't have up to the required quantity.`);
     //if buyer cart exists 
     if (cart) {
-        //returns -1 if the product isn't in the cart
-        const productIndexCart = await cart.retrieveProductIndex(name);
+        //returns -1 if the product isn't already in the cart
+        const productIndexCart = await cart.retrieveProductIndex(productId);
         if (productIndexCart === -1) {
-            //pushing the products into the cart
-            cart.products.push({ productID: product._id, name, quantity, price: product.price });
-            //the reduce function to recalculate the total bill amount
+            //product isn't in cart yet,push product into cart
+            cart.products.push({ productId: product._id, name: product.name, quantity, price: product.price });
+            //the reduce function to calculate the total bill amount
             cart.bill = cart.products.reduce((acc, curr) => {
                 return acc + curr.quantity * curr.price;
             }, 0);
@@ -64,49 +60,48 @@ cartSchema.statics.cartCreation = async function (buyerID, sellerID, name, quant
     } else {
         //if buyer doesn't have a cart 
         const newcart = await this.create({
-            buyerID, products: [{ productID: product._id, name, quantity, price: product.price }], bill: product.price * quantity
+            buyerId, products: [{ productId: product._id, name: product.name, quantity, price: product.price }], bill: product.price * quantity
         })
         return newcart;
     }
 };
 
-cartSchema.statics.pushCart = async function (buyerID) {
-    const cart = await this.retrieveCart(buyerID);
-
-    //creating a order document for the buyer to see orders
-    const order = new Order({ buyerID });
+//static method that creates orders using products added to cart 
+cartSchema.statics.createOrderUsingCart = async function (buyerId) {
+    const cart = await this.retrieveCart(buyerId);
     for (let i = 0; i < cart.products.length; i++) {
-        const sellerID = await cart.getSeller(cart.products[i].productID);
-        order.products.push({
-            productID: cart.products[i].productID, quantity: cart.products[i].quantity
-        });
-        order.bill = 0;
-        order.bill += (cart.products[i].quantity * cart.products[i].price)
-        User.findById(buyerID).then(async function (seller) {
-            seller.orders.push(order._id);
-            await seller.save();
-        });
+        const { productId, quantity, price } = cart.products[i];
+        const catalog = await cart.getCatalog(productId);
+        const { sellerId } = catalog;
+        //create order
+        await Order.pushOrderFromCart(buyerId, sellerId, productId, quantity, price);
+        //retrieveProductIndex from catalog
+        const productIndex = await catalog.retrieveProductIndex(productId);
+        //reduce the product quantity
+        catalog.products[productIndex].quantity -= quantity;
+        //save catalog
+        await catalog.save();
     }
-    await order.save();
-    // delete cart since order has been made.
-    // deleteCart(buyerID);
-    return order;
+    //delete the cart since orders has been pushed to thier respective sellers.
+    await this.deleteOne({ buyerId });
 };
 
-cartSchema.methods.retrieveProductIndex = async function (productID) {
-    const productIndex = this.products.findIndex((product) => {
-        return productID === product._id;
-    })
+// static method that retrieves the index of a product added to cart
+cartSchema.methods.retrieveProductIndex = async function (productId) {
+    if (!mongoose.isValidObjectId(productId)) throw Error('Invalid Id provided.')
+    const productIndex = this.products.findIndex(product => product.productId == productId);
     return productIndex;
 };
 
-//static method to update the products within a cart
-cartSchema.statics.updateCart = async function (buyerID, name, quantity) {
-    const cart = await this.retrieveCart(buyerID);
+//static method to update products within a cart
+cartSchema.statics.updateCart = async function (buyerId, productId, quantity) {
+    const cart = await this.retrieveCart(buyerId);
     // retrieving the product from the cart
-    const productIndex = await cart.retrieveProductIndex(name);
+    const productIndex = await cart.retrieveProductIndex(productId);
+    if (productIndex === -1) throw new Error(`Item not in buyer's cart.`)
+    //to verify if the seller has up to the quantity the buyer wants to add to cart
+    await Catalog.retrieveQuantity(productId, quantity);
     const product = cart.products[productIndex];
-    // cart.verifyQuantity(quantity, product);
     product.quantity = parseInt(quantity);
     cart.products[productIndex] = product;
     cart.bill = cart.products.reduce((acc, curr) => {
@@ -117,13 +112,12 @@ cartSchema.statics.updateCart = async function (buyerID, name, quantity) {
 };
 
 //static method to delete products from a cart
-cartSchema.statics.deleteProductInCart = async function (buyerID, productID) {
-    console.log(productID);
-    const cart = await this.retrieveCart(buyerID);
+cartSchema.statics.deleteProductInCart = async function (buyerId, productId) {
+    const cart = await this.retrieveCart(buyerId);
     const productIndex = cart.products.findIndex(product =>
-        product.productID == productID
+        product.productId == productId
     );
-    if (productIndex === -1) throw new Error(`Item is not in buyer cart.`);
+    if (productIndex === -1) throw new Error(`Item not in buyer's cart.`);
     cart.products.splice(productIndex, 1);
     cart.bill = cart.products.reduce((acc, curr) => {
         return acc + curr.quantity * curr.price;
@@ -133,10 +127,10 @@ cartSchema.statics.deleteProductInCart = async function (buyerID, productID) {
 };
 
 //static method to delete products from a cart
-cartSchema.statics.deleteCart = async function (buyerID) {
-    const cart = await this.exists({ buyerID });
-    if (!cart) throw new Error(`Buyer doesn't have a cart.`);
-    await this.deleteOne({ buyerID });
+cartSchema.statics.deleteCart = async function (buyerId) {
+    const deletedCart = await this.deleteOne({ buyerId });
+    if (deletedCart.deletedCount === 0) throw new Error(`Buyer doesn't have a cart.`);
+
 };
 
 module.exports = mongoose.model('Cart', cartSchema);

@@ -15,7 +15,7 @@ app.use(cookieparser());
 const PORT = process.env.PORT || 3000;
 const DBURI = process.env.DBURI
 
-mongoose.connect(DBURI, { useNewUrlParser: true, useUnifiedTopology: true }, () => {
+mongoose.connect(DBURI, { useNewUrlParser: true, useUnifiedTopology: true, autoIndex: true },() => {
       app.listen(PORT, () => { console.log(` Connected to MongoDb and server is running on PORT: ${PORT}`) })
 });
 

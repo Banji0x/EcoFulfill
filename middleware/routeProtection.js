@@ -24,7 +24,7 @@ const SELLERONLY = async (req, res, next) => {
     if (encodedToken) {
          jwt.verify(encodedToken, process.env.JWTSELLERSECRET, (err, decodedToken) => {
             if (err) {
-                res.redirect('/api/auth/login');
+                res.redirect('/api/auth/register');
             } else {
                 req.userID = decodedToken._id;
                 next();

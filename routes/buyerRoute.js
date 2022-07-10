@@ -9,24 +9,21 @@ buyerRoute.get('/api/buyer', BUYERONLY, buyerController.buyerRouteAuth);
 
 buyerRoute.get('/api/buyer/list-of-sellers', BUYERONLY, buyerController.allSellersGET);
 
-buyerRoute.get('/api/buyer/allCatalogs', BUYERONLY, buyerController.allCatalogsGET);
+buyerRoute.get('/api/buyer/catalogs', BUYERONLY, buyerController.allCatalogsGET);
 
-buyerRoute.get('/api/buyer/seller-catalog/:sellerID', BUYERONLY, buyerController.sellerCatalogGET);
+buyerRoute.get('/api/buyer/seller-catalog/:sellerId', BUYERONLY, buyerController.sellerCatalogGET);
 
 buyerRoute.get('/api/buyer/cart', BUYERONLY, buyerController.cartGET);
 
 buyerRoute.get('/api/buyer/orders', BUYERONLY, buyerController.ordersGET);
 
 //POST REQUESTS
-//name,quantity
-buyerRoute.post('/api/buyer/create-cart/:sellerID', BUYERONLY, [
-    check('name')
+buyerRoute.post('/api/buyer/create-cart/:sellerId', BUYERONLY, [
+    check('productId')
         .exists()
-        .withMessage('Product requires a name field')
+        .withMessage('productId is required')
         .isString()
-        .withMessage('Product name must be a string')
-        .toLowerCase()
-        .trim(),
+        .withMessage('productId must be a string'),
     check('quantity')
         .exists()
         .withMessage('Product requires a quantity field')
@@ -37,47 +34,57 @@ buyerRoute.post('/api/buyer/create-cart/:sellerID', BUYERONLY, [
 //create Orders using Cart
 buyerRoute.post('/api/buyer/push-orders', BUYERONLY, buyerController.createOrderUsingCart);
 
-//	Send a list of items to create an order for seller with id = seller_id
-buyerRoute.post('/api/buyer/create-order/:sellerID', BUYERONLY, [
-    check('name')
-        .exists()
-        .withMessage('Product requires a name field')
+//Send a list of items to create an order for seller with id = seller_id
+buyerRoute.post('/api/buyer/create-order/:sellerId', BUYERONLY, [
+    check('productId')
+        .if(check('productName').not().exists()) //if product name doesn't exist
+        .not().isEmpty() //then the product Id is required
+        .isString()
+        .withMessage('Product id must be a string')
+    ,
+    check('productName')
+        .if(check('productId').not().exists()) //if product Id doesn't exist
+        .not().isEmpty() //then the product name is required
         .isString()
         .withMessage('Product name must be a string')
-        .toLowerCase()
-        .trim(),
+    ,
     check('quantity')
         .default(1)
-        .exists()
-        .withMessage('Product requires a quantity field')
         .isInt({ min: 1 })
         .withMessage('Product quantity must be a greater than zero')
 ], buyerController.createOrderPOST);
 
-//PUT REQUESTS
+//PATCH REQUESTS
 //update Cart
-//name,quantity
-buyerRoute.put('/api/buyer/update-cart', BUYERONLY, [
-    check('name')
+buyerRoute.patch('/api/buyer/cart/update', BUYERONLY, [
+    check('productId')
         .exists()
-        .withMessage('Product requires a name field')
+        .withMessage('productId is required')
         .isString()
-        .withMessage('Product name must be a string')
-        .toLowerCase()
-        .trim(),
+        .withMessage('productId must be a string')
+    ,
     check('quantity')
         .exists()
         .withMessage('Product requires a quantity field')
         .isInt({ min: 1 })
         .withMessage('Product quantity must be a greater than zero')
-], buyerController.updateCartPUT);
+], buyerController.updateCartPATCH);
 
 //DELETE REQUESTS
+//delete a product from cart
 buyerRoute.delete('/api/buyer/cart/:productId', BUYERONLY, buyerController.productInCartDELETE);
 
+//delete cart
 buyerRoute.delete('/api/buyer/delete-cart', BUYERONLY, buyerController.cartDELETE);
 
-buyerRoute.delete('/api/buyer/cancel-order', BUYERONLY, buyerController.orderDELETE)
+// cancel a particular product ordered from a seller
+buyerRoute.delete('/api/buyer/orders/:sellerId/:productId', BUYERONLY, buyerController.orderedProductDELETE);
+
+//cancel all ordered Product from a seller
+buyerRoute.delete('/api/buyer/orders/:sellerId', BUYERONLY, buyerController.orderDELETE);
+
+//cancel all orders
+buyerRoute.delete('/api/buyer/cancel-orders', BUYERONLY, buyerController.allOrdersDELETE);
 
 //EXPORTS
 module.exports = buyerRoute; 

@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 const argon2 = require('argon2');
 const jwt = require("jsonwebtoken");
-
 const userSchema = new mongoose.Schema({
       name: String,
       email: {
             type: String,
-            unique: true
+            unique: true,
+            required: true
       },
       password: String,
       role: {
@@ -14,24 +14,24 @@ const userSchema = new mongoose.Schema({
             default: "buyer",
             enum: ["buyer", "seller"]
       },
-      catalog: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'catalog' }],
-      orders: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'order' }]
+      catalog: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'catalog'
+      }
 });
 
-//mongoose pre hook.
+//Pre-hook method to hash password before it's saved to db && to convert the name to lowercase
 userSchema.pre('save', async function () {
       this.password = await argon2.hash(this.password);
       this.name = this.name.toLowerCase();
 });
 
-// method to automatically generateJwtToken.
+//Method to automatically generateJwtToken.
 userSchema.methods.generateJwtToken = async function () {
-      if (this.role === "buyer") {
+      if (this.role === "buyer")
             return jwt.sign({ _id: this._id.toString() }, process.env.JWTBUYERSECRET);
-
-      } else {
+      else
             return jwt.sign({ _id: this._id.toString() }, process.env.JWTSELLERSECRET);
-      }
 };
 
 //Static method to verify and login user.
@@ -43,30 +43,20 @@ userSchema.statics.login = async function (email, password) {
       const verified = await argon2.verify(user.password, password)
       if (!verified) throw new Error("Password entered is incorrect.")
       return user;
-
 };
-
 
 //static method to get all Sellers id && name. 
 userSchema.statics.allSellers = async function () {
       const sellers = await this.find({ role: 'seller' })
-            .select('name email');
+            .select('name email').lean()
+      if (sellers.length === 0) throw new Error(`Seller not found.`)
       return sellers;
 };
 
-userSchema.statics.retrieveOrders = async function (sellerID) {
-      const orders = await this.findById(sellerID)
-            .populate({ path: 'orders', select: 'buyerID products -products["bill"] -_id' })
-            .select('name orders');
-      return orders
+userSchema.statics.deleteAccount = async function (userId) {
+      const deletedUser = await this.deleteOne({ _id: userId });
+      if (deletedUser.deletedCount === 0) throw new Error(`Account not found.`);
 };
-
-userSchema.statics.deleteAccount = async function (userID) {
-      const x = await this.exists({ _id: userID });
-      await this.deleteOne({ _id: userID });
-};
-
 // Exporting the mongoose model 
 module.exports = mongoose.model('user', userSchema);
-
 

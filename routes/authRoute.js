@@ -4,13 +4,17 @@ const { Router } = require('express');
 const authRoute = Router();
 
 //GET REQUESTS
+//Route unauthorized user's will be redirected to
 authRoute.get('/api/auth/register', authController.registerGET);
 
+//Get request for Login page 
 authRoute.get('/api/auth/login', authController.loginGET);
 
+//Route unauthorized user's will be redirected'
 authRoute.get('/api/auth/logout', authController.logoutGET);
 
 //POST REQUESTS
+//Route to register a new user
 authRoute.post('/api/auth/register',
     [
         check('name')
@@ -33,22 +37,27 @@ authRoute.post('/api/auth/register',
         ,
         check('password')
             .exists()
-            .withMessage('password is required')
+            .withMessage('Password is required')
             .isLength({ min: 6 })
             .withMessage('minimum password length must be at least 6 characters')
         // .isStrongPassword()
         // .withMessage('Password must be a strong password')
     ], authController.registerPOST);
 
+//Route for a registered user to login 
 authRoute.post('/api/auth/login',
     [
         check('email')
+            .isEmail()
+            .withMessage('Input must be a valid email address')
             .normalizeEmail()
     ]
-    , authController.loginPOST);
+    ,
+    authController.loginPOST);
 
 //DELETE REQUESTS
-authRoute.delete('/api/auth/delete',authController.deleteAccountDELETE)
+//Route for user to delete account
+authRoute.delete('/api/auth/delete', authController.deleteAccountDELETE)
 
 //EXPORTS
 module.exports = authRoute; 

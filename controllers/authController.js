@@ -9,7 +9,7 @@ module.exports.registerGET = (req, res) => {
 };
 
 module.exports.loginGET = (req, res) => {
-  res.status(400).send("Unauthorized User");
+  res.status(400).send("Kindly switch request to: POST to login");
 };
 
 module.exports.logoutGET = async (req, res) => {
@@ -48,7 +48,6 @@ module.exports.loginPOST = async (req, res) => {
     res.status(201).json(`${user.name} has been logged in as a ${user.role}`);
   }
   catch (err) {
-    console.log(err.message);
     const error = errHandler(err);
     res.status(404).json(error);
   }
