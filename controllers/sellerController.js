@@ -3,49 +3,44 @@ const Catalog = require('../models/Catalog');
 const errorHandler = require('../controllers/errorHandler');
 const { validationResult } = require('express-validator');
 
-module.exports.sellerRouteAuth = (req, res) => {
-    res.status(200).json(`Seller ${req.userID} verified`);
-};
-
 //GET REQUESTS
-//Controller to retrieve all orders a seller has received
+//Controller for seller to retrieve the list of orders he/she  has received
 module.exports.ordersListGET = async (req, res) => {
-    //gets the list of orders a seller has receieved 
-    const sellerId = req.userID;
+    const { userId } = req.locals;
     try {
-        const orders = await Order.getOrdersSeller(sellerId);
+        const orders = await Order.getOrders(userId);
         res.status(200).json(orders);
     } catch (err) {
         const error = errorHandler(err);
-        res.status(400).json(error);
+        res.status(400).json({ error });
     }
 };
 
 //Controller for a seller to get his/her catalog
 module.exports.sellerCatalogGET = async (req, res) => {
-    const sellerId = req.userID;
+    const { userId } = req.locals;
     try {
-        const catalog = await Catalog.getCatalogById(sellerId);
+        const catalog = await Catalog.getCatalogById(userId);
         res.status(200).send(catalog);
     } catch (err) {
         const error = errorHandler(err);
-        res.status(404).send(error)
+        res.status(404).json({ error });
     }
 };
 
 //POST REQUESTS
-//Controller to add products to a new/existing catalog
+//Controller for a seller to add products to a new/existing catalog
 module.exports.createCatalogPOST = async (req, res) => {
     //pushes products to existing/new catalog
-    const sellerId = req.userID;
+    const { userId } = req.locals;
     const { name, price, quantity, category, description } = req.body;
     try {
         validationResult(req).throw();
-        const catalog = await Catalog.createCatalog(sellerId, name, price, quantity, category, description);
+        const catalog = await Catalog.createCatalog(userId, name, price, quantity, category, description);
         res.status(201).json(catalog);
     } catch (err) {
         const error = errorHandler(err);
-        res.status(500).json(error);
+        res.status(500).json({ error });
     }
 };
 
@@ -53,16 +48,16 @@ module.exports.createCatalogPOST = async (req, res) => {
 //Controller to update products in a catalog
 module.exports.updateCatalogPATCH = async function (req, res) {
     //updates products in catalog
-    const sellerId = req.userID;
+    const { userId } = req.locals;
     const { productId } = req.params;
     const { name, price, quantity, category, description } = req.body;
     try {
         validationResult(req).throw();
-        const updatedCatalog = await Catalog.updateCatalog(sellerId, productId, name, price, quantity, category, description);
+        const updatedCatalog = await Catalog.updateCatalog(userId, productId, name, price, quantity, category, description);
         res.status(200).json(updatedCatalog);
     } catch (err) {
         const error = errorHandler(err);
-        res.status(403).json(error);
+        res.status(403).json({ error });
     }
 };
 
@@ -71,14 +66,13 @@ module.exports.updateCatalogPATCH = async function (req, res) {
 module.exports.deleteProductFromCatalog = async function (req, res) {
     try {
         validationResult(req).throw();
-        const sellerId = req.userID;
+        const { userId } = req.locals;
         const { productId } = req.params;
-        await Catalog.deleteProduct(sellerId, productId)
-        res.status(200).send("Product deleted successfully")
+        const newCatalog = await Catalog.deleteProduct(userId, productId)
+        res.status(200).send(`Product deleted successfully \n ${newCatalog}`)
     } catch (err) {
         const error = errorHandler(err);
-        res.status(403).json(error);
-        console.error(err.message);
+        res.status(403).json({ error });
     }
 
 };
@@ -86,12 +80,12 @@ module.exports.deleteProductFromCatalog = async function (req, res) {
 //Controller for seller to delete catalog
 module.exports.CatalogDELETE = async function (req, res) {
     try {
-        const sellerId = req.userID;
-        await Catalog.deleteCatalog(sellerId);
+        const { userId } = req.locals;
+        await Catalog.deleteCatalog(userId);
         res.status(200).send('Catalog deleted successfully')
     } catch (err) {
         const error = errorHandler(err);
-        res.status(403).json(error);
+        res.status(403).json({ error });
     }
 };
 

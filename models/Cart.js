@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Catalog = require('./Catalog');
 const Order = require('./Order');
 const cartSchema = new mongoose.Schema({
-    buyerId: {
+    userId: {
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'user'
     },
@@ -28,16 +28,16 @@ cartSchema.methods.getCatalog = async function (productId) {
 };
 
 //static method to get the cart of the buyer that's currently logged in 
-cartSchema.statics.retrieveCart = async function (buyerId) {
-    const cart = await this.findOne({ buyerId });
-    if (!cart || cart.products.length === 0) throw new Error(`Buyer doesn't have a cart.`);
+cartSchema.statics.retrieveCart = async function (id) {
+    const cart = await this.findOne({ userId: id });
+    if (!cart) throw new Error(`Buyer doesn't have a cart.`);
     return cart;
 };
 
 //static method that creates a cart || adds products to a cart once the product legibility has been confirmed
-cartSchema.statics.cartCreation = async function (buyerId, sellerId, productId, quantity) {
+cartSchema.statics.cartCreation = async function (userId, sellerId, productId, quantity) {
     const catalog = await Catalog.retrieveCatalog(sellerId);
-    const cart = await this.findOne({ buyerId });
+    const cart = await this.findOne({ userId });
     //to confirm if the product exists 
     const productIndex = await catalog.retrieveProductIndex(productId);
     const product = catalog.products[productIndex];
@@ -60,21 +60,21 @@ cartSchema.statics.cartCreation = async function (buyerId, sellerId, productId, 
     } else {
         //if buyer doesn't have a cart 
         const newcart = await this.create({
-            buyerId, products: [{ productId: product._id, name: product.name, quantity, price: product.price }], bill: product.price * quantity
+            userId, products: [{ productId: product._id, name: product.name, quantity, price: product.price }], bill: product.price * quantity
         })
         return newcart;
     }
 };
 
 //static method that creates orders using products added to cart 
-cartSchema.statics.createOrderUsingCart = async function (buyerId) {
-    const cart = await this.retrieveCart(buyerId);
+cartSchema.statics.createOrderUsingCart = async function (id) {
+    const cart = await this.retrieveCart(id);
     for (let i = 0; i < cart.products.length; i++) {
         const { productId, quantity, price } = cart.products[i];
         const catalog = await cart.getCatalog(productId);
-        const { sellerId } = catalog;
+        const { userId } = catalog;
         //create order
-        await Order.pushOrderFromCart(buyerId, sellerId, productId, quantity, price);
+        await Order.pushOrderFromCart(userId, sellerId, productId, quantity, price);
         //retrieveProductIndex from catalog
         const productIndex = await catalog.retrieveProductIndex(productId);
         //reduce the product quantity
@@ -83,7 +83,7 @@ cartSchema.statics.createOrderUsingCart = async function (buyerId) {
         await catalog.save();
     }
     //delete the cart since orders has been pushed to thier respective sellers.
-    await this.deleteOne({ buyerId });
+    await this.deleteOne({ userId });
 };
 
 // static method that retrieves the index of a product added to cart
@@ -94,8 +94,8 @@ cartSchema.methods.retrieveProductIndex = async function (productId) {
 };
 
 //static method to update products within a cart
-cartSchema.statics.updateCart = async function (buyerId, productId, quantity) {
-    const cart = await this.retrieveCart(buyerId);
+cartSchema.statics.updateCart = async function (userId, productId, quantity) {
+    const cart = await this.retrieveCart(userId);
     // retrieving the product from the cart
     const productIndex = await cart.retrieveProductIndex(productId);
     if (productIndex === -1) throw new Error(`Item not in buyer's cart.`)
@@ -112,8 +112,8 @@ cartSchema.statics.updateCart = async function (buyerId, productId, quantity) {
 };
 
 //static method to delete products from a cart
-cartSchema.statics.deleteProductInCart = async function (buyerId, productId) {
-    const cart = await this.retrieveCart(buyerId);
+cartSchema.statics.deleteProductInCart = async function (userId, productId) {
+    const cart = await this.retrieveCart(userId);
     const productIndex = cart.products.findIndex(product =>
         product.productId == productId
     );
@@ -123,14 +123,17 @@ cartSchema.statics.deleteProductInCart = async function (buyerId, productId) {
         return acc + curr.quantity * curr.price;
     }, 0);
     await cart.save();
+    //delete the cart document since there's no product in it.
+    if (cart.products.length == 0) await this.deleteOne({ userId });
+
     return cart;
 };
 
 //static method to delete products from a cart
-cartSchema.statics.deleteCart = async function (buyerId) {
-    const deletedCart = await this.deleteOne({ buyerId });
+cartSchema.statics.deleteCart = async function (userId) {
+    const deletedCart = await this.deleteOne({ userId });
     if (deletedCart.deletedCount === 0) throw new Error(`Buyer doesn't have a cart.`);
-
 };
 
+//Exports
 module.exports = mongoose.model('Cart', cartSchema);

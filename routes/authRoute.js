@@ -4,13 +4,13 @@ const { Router } = require('express');
 const authRoute = Router();
 
 //GET REQUESTS
-//Route unauthorized user's will be redirected to
+//Register page route
 authRoute.get('/api/auth/register', authController.registerGET);
 
-//Get request for Login page 
+//Login page route
 authRoute.get('/api/auth/login', authController.loginGET);
 
-//Route unauthorized user's will be redirected'
+//Logout route 
 authRoute.get('/api/auth/logout', authController.logoutGET);
 
 //POST REQUESTS
@@ -35,13 +35,20 @@ authRoute.post('/api/auth/register',
             .withMessage('Input must be a valid email address')
             .normalizeEmail()
         ,
+        check('gender')
+            .isIn(['male', 'female', 'other'])
+            .withMessage('Gender must be a male,female or other')
+        ,
         check('password')
             .exists()
             .withMessage('Password is required')
-            .isLength({ min: 6 })
-            .withMessage('minimum password length must be at least 6 characters')
-        // .isStrongPassword()
-        // .withMessage('Password must be a strong password')
+            .matches('^(?=(.*[a-z]){3,})(?=(.*[A-Z]){2,})(?=(.*[0-9]){2,})(?=(.*[!@#$%^&*()\-__+.]){1,}).{8,}$')
+            .withMessage('Password must contain at least: 3 lowercase, 2 uppercase letters,2 numbers and 1 special characters')
+        ,
+        check('role')
+            .isIn(['buyer', 'seller'])
+            .withMessage('User must be either be a buyer or a seller')
+
     ], authController.registerPOST);
 
 //Route for a registered user to login 
@@ -52,12 +59,11 @@ authRoute.post('/api/auth/login',
             .withMessage('Input must be a valid email address')
             .normalizeEmail()
     ]
-    ,
-    authController.loginPOST);
+    , authController.loginPOST);
 
 //DELETE REQUESTS
 //Route for user to delete account
-authRoute.delete('/api/auth/delete', authController.deleteAccountDELETE)
+authRoute.delete('/api/auth/delete', authController.deleteAccountDELETE);
 
 //EXPORTS
 module.exports = authRoute; 

@@ -1,24 +1,28 @@
 const { Router } = require('express');
 const buyerController = require('../controllers/buyerController');
-const { BUYERONLY } = require('../middleware/routeProtection');
+const { buyerOnly } = require('../middleware/authMiddleware');
 const { check } = require('express-validator');
 const buyerRoute = Router();
 
 //GET REQUESTS
-buyerRoute.get('/api/buyer', BUYERONLY, buyerController.buyerRouteAuth);
+//Route for the buyer to get all sellers
+buyerRoute.get('/api/buyer/list-of-sellers', buyerOnly, buyerController.allSellersGET);
 
-buyerRoute.get('/api/buyer/list-of-sellers', BUYERONLY, buyerController.allSellersGET);
+//Route for the buyer to get all catalogs
+buyerRoute.get('/api/buyer/catalogs', buyerOnly, buyerController.allCatalogsGET);
 
-buyerRoute.get('/api/buyer/catalogs', BUYERONLY, buyerController.allCatalogsGET);
+//Route to get the seller's catalog using the seller's id
+buyerRoute.get('/api/buyer/seller-catalog/:sellerId', buyerOnly, buyerController.sellerCatalogGET);
 
-buyerRoute.get('/api/buyer/seller-catalog/:sellerId', BUYERONLY, buyerController.sellerCatalogGET);
+//Route for the buyer to retrieve existing cart document
+buyerRoute.get('/api/buyer/cart', buyerOnly, buyerController.cartGET);
 
-buyerRoute.get('/api/buyer/cart', BUYERONLY, buyerController.cartGET);
-
-buyerRoute.get('/api/buyer/orders', BUYERONLY, buyerController.ordersGET);
+//Route to get the buyer to retrieve his/her orders
+buyerRoute.get('/api/buyer/orders', buyerOnly, buyerController.ordersGET);
 
 //POST REQUESTS
-buyerRoute.post('/api/buyer/create-cart/:sellerId', BUYERONLY, [
+//Route for the buyer to add a product to cart using the product id 
+buyerRoute.post('/api/buyer/create-cart/:sellerId', buyerOnly, [
     check('productId')
         .exists()
         .withMessage('productId is required')
@@ -31,22 +35,24 @@ buyerRoute.post('/api/buyer/create-cart/:sellerId', BUYERONLY, [
         .withMessage('Product quantity must be a greater than zero')
 ], buyerController.createCartPOST);
 
-//create Orders using Cart
-buyerRoute.post('/api/buyer/push-orders', BUYERONLY, buyerController.createOrderUsingCart);
+//Route for the buyer to place order of products in cart
+buyerRoute.post('/api/buyer/push-orders', buyerOnly, buyerController.createOrderUsingCart);
 
-//Send a list of items to create an order for seller with id = seller_id
-buyerRoute.post('/api/buyer/create-order/:sellerId', BUYERONLY, [
+//Route for the buyer to create a new order with either the product name or product id
+buyerRoute.post('/api/buyer/create-order/:sellerId', buyerOnly, [
     check('productId')
-        .if(check('productName').not().exists()) //if product name doesn't exist
-        .not().isEmpty() //then the product Id is required
+        .optional()
         .isString()
-        .withMessage('Product id must be a string')
+        .withMessage('productId must be a string')
+        .isLength({ min: 24 })
+        .withMessage('input must be a product Id')
     ,
     check('productName')
-        .if(check('productId').not().exists()) //if product Id doesn't exist
-        .not().isEmpty() //then the product name is required
+        .optional()
         .isString()
-        .withMessage('Product name must be a string')
+        .withMessage('productName must be a string')
+        .isLength({ max: 10 })
+        .withMessage('input must be a product name')
     ,
     check('quantity')
         .default(1)
@@ -55,8 +61,8 @@ buyerRoute.post('/api/buyer/create-order/:sellerId', BUYERONLY, [
 ], buyerController.createOrderPOST);
 
 //PATCH REQUESTS
-//update Cart
-buyerRoute.patch('/api/buyer/cart/update', BUYERONLY, [
+//Route for the buyer to update products already added to th cart document
+buyerRoute.patch('/api/buyer/cart/update', buyerOnly, [
     check('productId')
         .exists()
         .withMessage('productId is required')
@@ -71,20 +77,20 @@ buyerRoute.patch('/api/buyer/cart/update', BUYERONLY, [
 ], buyerController.updateCartPATCH);
 
 //DELETE REQUESTS
-//delete a product from cart
-buyerRoute.delete('/api/buyer/cart/:productId', BUYERONLY, buyerController.productInCartDELETE);
+//Route for the buyer to delete a product already added to cart
+buyerRoute.delete('/api/buyer/cart/:productId', buyerOnly, buyerController.productInCartDELETE);
 
-//delete cart
-buyerRoute.delete('/api/buyer/delete-cart', BUYERONLY, buyerController.cartDELETE);
+//Route for the buyer to delete an existing cart
+buyerRoute.delete('/api/buyer/delete-cart', buyerOnly, buyerController.cartDELETE);
 
-// cancel a particular product ordered from a seller
-buyerRoute.delete('/api/buyer/orders/:sellerId/:productId', BUYERONLY, buyerController.orderedProductDELETE);
+//Route for the buyer to cancel a particular product ordered from a seller using the product id and the seller id 
+buyerRoute.delete('/api/buyer/orders/:sellerId/:productId', buyerOnly, buyerController.orderedProductDELETE);
 
-//cancel all ordered Product from a seller
-buyerRoute.delete('/api/buyer/orders/:sellerId', BUYERONLY, buyerController.orderDELETE);
+//Route for the buyer to cancel all ordered products from a seller
+buyerRoute.delete('/api/buyer/orders/:sellerId', buyerOnly, buyerController.orderDELETE);
 
-//cancel all orders
-buyerRoute.delete('/api/buyer/cancel-orders', BUYERONLY, buyerController.allOrdersDELETE);
+// Route for the buyer to cancel all orders 
+buyerRoute.delete('/api/buyer/cancel-orders', buyerOnly, buyerController.allOrdersDELETE);
 
 //EXPORTS
 module.exports = buyerRoute; 

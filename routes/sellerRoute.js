@@ -1,28 +1,32 @@
 const { Router } = require('express');
 const sellerController = require('../controllers/sellerController');
-const { SELLERONLY } = require('../middleware/routeProtection');
+const { sellerOnly } = require('../middleware/authMiddleware');
 const { check } = require('express-validator');
 const sellerRoute = Router();
 
 //GET REQUESTS
-sellerRoute.get('/api/seller', SELLERONLY, sellerController.sellerRouteAuth);
-sellerRoute.get('/api/seller/catalog', SELLERONLY, sellerController.sellerCatalogGET);
-sellerRoute.get('/api/seller/orders', SELLERONLY, sellerController.ordersListGET);
+//Route for the seller to get his/her catalog
+sellerRoute.get('/api/seller/catalog', sellerOnly, sellerController.sellerCatalogGET);
+
+//Route for the seller to retrieve his/her orders
+sellerRoute.get('/api/seller/orders', sellerOnly, sellerController.ordersListGET);
 
 //POST REQUESTS 
-sellerRoute.post('/api/seller/create-catalog', SELLERONLY, [
+//Route for the seller to add products to a new/existing catalog
+sellerRoute.post('/api/seller/create-catalog', sellerOnly, [
     check('name')
         .exists()
         .withMessage('The product you want to add to the catalog requires a name')
         .isString()
         .withMessage('Product name must be a string')
-        .isLength({ min: 3, max: 20 })
+        .isLength({ min: 3, max: 10 })
         .withMessage('Character length must be between 3 and 20')
         .toLowerCase()
         .trim()
     ,
     check('quantity')
-        .default(1)
+        .exists()
+        .withMessage('The product requires a quantity')
         .isInt({ min: 1 })
         .withMessage('Product quantity must be a number greater than zero')
     ,
@@ -50,10 +54,11 @@ sellerRoute.post('/api/seller/create-catalog', SELLERONLY, [
 ], sellerController.createCatalogPOST);
 
 //PATCH REQUESTS
-sellerRoute.patch('/api/seller/catalog/:productId', SELLERONLY, [
+//Route for the seller to update a product in his/her catalog using the product id
+//Seller can update the product name||quantity||price||category||description
+sellerRoute.patch('/api/seller/catalog/:productId', sellerOnly, [
     check('name')
-        .exists()
-        .withMessage('The product you want to add to the catalog requires a name')
+        .optional()
         .isString()
         .withMessage('Product name must be a string')
         .isLength({ min: 3, max: 20 })
@@ -62,23 +67,21 @@ sellerRoute.patch('/api/seller/catalog/:productId', SELLERONLY, [
         .trim()
     ,
     check('quantity')
+        .optional()
         .isInt({ min: 1 })
         .withMessage('Product quantity must be a number greater than zero')
     ,
     check('price')
-        .exists()
-        .withMessage('The product requires a price')
+        .optional()
         .isInt({ min: 1 })
         .withMessage('Product price must be a number greater than zero')
     , check('category')
-        .exists()
-        .withMessage('A category is required')
+        .optional()
         .isString()
         .withMessage('Category must be a string')
     ,
     check('description')
-        .exists()
-        .withMessage('The product requires a description')
+        .optional()
         .isString()
         .withMessage('Product description must be a string')
         .isLength({ min: 10, max: 150 })
@@ -86,12 +89,14 @@ sellerRoute.patch('/api/seller/catalog/:productId', SELLERONLY, [
         .toLowerCase()
         .trim()
 
-], sellerController.updateCatalogPATCH)
+], sellerController.updateCatalogPATCH);
 
 //DELETE REQUESTS
-sellerRoute.delete('/api/seller/catalog/:productId', SELLERONLY, sellerController.deleteProductFromCatalog)
+//Route for the seller to delete a product from his/her existing catalog
+sellerRoute.delete('/api/seller/catalog/:productId', sellerOnly, sellerController.deleteProductFromCatalog);
 
-sellerRoute.delete('/api/seller/delete-catalog', SELLERONLY, sellerController.CatalogDELETE)
+//Route for the seller to delete his/her catalog
+sellerRoute.delete('/api/seller/delete-catalog', sellerOnly, sellerController.CatalogDELETE);
 
 //EXPORTS
 module.exports = sellerRoute;

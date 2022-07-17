@@ -67,7 +67,7 @@ catalogSchema.statics.createCatalog = async function (sellerId, name, price, qua
     //if catalog doesn't exist
     const newCatalog = await this.create({ sellerId, products: [{ name, price, quantity, category, description }] });
     //push catalog document Id to buyer
-    User.findByIdAndUpdate(sellerId, { $push: { catalog: newCatalog._id } });
+    await User.findByIdAndUpdate(sellerId, { catalog: newCatalog._id });
     return newCatalog;
   }
 };
@@ -105,14 +105,21 @@ catalogSchema.statics.retrieveCatalog = async function (sellerId) {
 };
 
 //static method to update products in a catalog
-catalogSchema.statics.updateCatalog = async function (sellerId, productId, name, price, quantity, description) {
+//seller can either update name\\price\\quantity\\description
+catalogSchema.statics.updateCatalog = async function (sellerId, productId, name, price, quantity, category, description) {
   const catalog = await this.retrieveCatalog(sellerId);
   const productIndex = await catalog.retrieveProductIndex(productId);
   const product = catalog.products[productIndex];
+  name = name || product.name;
   product.name = name;
+  price = price || product.price;
   product.price = parseInt(price);
+  quantity = quantity || product.quantity;
   product.quantity = parseInt(quantity);
+  description = description || product.description;
   product.description = description;
+  category = category || product.category;
+  product.category = category;
   catalog.products[productIndex] = product;
   await catalog.save();
   return catalog;
@@ -124,15 +131,16 @@ catalogSchema.statics.deleteProduct = async function (sellerId, productId) {
   const productIndex = await catalog.retrieveProductIndex(productId);
   catalog.products.splice(productIndex, 1);
   await catalog.save();
+  return catalog;
 };
 
 //static method to delete a catalog 
 catalogSchema.statics.deleteCatalog = async function (sellerId) {
-  const deletedCatalog = await this.deleteOne({ seller: sellerId });
+  const deletedCatalog = await this.deleteOne({ sellerId });
   if (deletedCatalog.deletedCount === 0) throw new Error(`Seller doesn't have a catalog.`)
   //delete catalog document id from the user document
-  User.findByIdAndUpdate(sellerId, { catalog: undefined });
+  await User.findByIdAndUpdate(sellerId, { catalog: undefined });
 };
 
-// Exporting the mongoose model 
+//Exports
 module.exports = mongoose.model('catalog', catalogSchema);

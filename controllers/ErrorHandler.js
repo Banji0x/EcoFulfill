@@ -1,6 +1,7 @@
 const errHandler = (err) => {
 
     let error;
+
     // Code for duplicates while registering 
     //User model error message
     if (err.code === 11000) {
@@ -28,7 +29,7 @@ const errHandler = (err) => {
         case `Account not found.`:
             error = err.message
         //Catalog model error messages 
-        case 'Seller not found.':
+        case 'No seller was found.':
             error = err.message
             break;
         case `Seller doesn't have a catalog.`:
@@ -64,7 +65,13 @@ const errHandler = (err) => {
         case `Item not in buyer's orders`:
             error = err.message
             break;
-        case `Buyer doesn't have any order.`:
+        case `Product not in orders.`:
+            error = err.message
+            break;
+        case `Input must be either a product name or Id.`:
+            error = err.message
+            break;
+        case `Input must contain either a product name or Id.`:
             error = err.message
             break;
     }

@@ -8,12 +8,9 @@ const userSchema = new mongoose.Schema({
             unique: true,
             required: true
       },
+      gender: String,
       password: String,
-      role: {
-            type: String,
-            default: "buyer",
-            enum: ["buyer", "seller"]
-      },
+      role: String,
       catalog: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'catalog'
@@ -28,10 +25,7 @@ userSchema.pre('save', async function () {
 
 //Method to automatically generateJwtToken.
 userSchema.methods.generateJwtToken = async function () {
-      if (this.role === "buyer")
-            return jwt.sign({ _id: this._id.toString() }, process.env.JWTBUYERSECRET);
-      else
-            return jwt.sign({ _id: this._id.toString() }, process.env.JWTSELLERSECRET);
+      return jwt.sign({ _id: this._id.toString(), email: this.email.toString(), role: this.role }, process.env.JWTSECRET, { expiresIn: '3 days' });
 };
 
 //Static method to verify and login user.
@@ -45,18 +39,20 @@ userSchema.statics.login = async function (email, password) {
       return user;
 };
 
-//static method to get all Sellers id && name. 
+//Static method to get all Sellers id && name. 
 userSchema.statics.allSellers = async function () {
       const sellers = await this.find({ role: 'seller' })
             .select('name email').lean()
-      if (sellers.length === 0) throw new Error(`Seller not found.`)
+      if (sellers.length === 0) throw new Error(`No seller was found.`)
       return sellers;
 };
 
+//Static method to delete a user account.
 userSchema.statics.deleteAccount = async function (userId) {
       const deletedUser = await this.deleteOne({ _id: userId });
       if (deletedUser.deletedCount === 0) throw new Error(`Account not found.`);
 };
-// Exporting the mongoose model 
+
+//Exports
 module.exports = mongoose.model('user', userSchema);
 
