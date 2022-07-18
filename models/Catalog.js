@@ -100,6 +100,7 @@ catalogSchema.statics.retrieveQuantity = async function (productId, quantity) {
 //static method to retrieve a seller's catalog
 catalogSchema.statics.retrieveCatalog = async function (sellerId) {
   const catalog = await this.findOne({ sellerId });
+  console.log(catalog)
   if (!catalog) throw new Error(`Seller doesn't have a catalog.`);
   return catalog;
 };

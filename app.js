@@ -22,8 +22,6 @@ mongoose.connect(DBURI, { useNewUrlParser: true, useUnifiedTopology: true, autoI
 //Routes
 //all GET requests
 app.get('*', currentUser);
-//all POST request
-app.post('*', currentUser);
 //homepage
 app.get('/api/homepage', (req, res) => {
       //  res.render('homepage') 

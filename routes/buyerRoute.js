@@ -21,7 +21,7 @@ buyerRoute.get('/api/buyer/cart', buyerOnly, buyerController.cartGET);
 buyerRoute.get('/api/buyer/orders', buyerOnly, buyerController.ordersGET);
 
 //POST REQUESTS
-//Route for the buyer to add a product to cart using the product id 
+//Route for the buyer to add products to a new/existing cart using the product id 
 buyerRoute.post('/api/buyer/create-cart/:sellerId', buyerOnly, [
     check('productId')
         .exists()

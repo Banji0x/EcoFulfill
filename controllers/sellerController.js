@@ -6,11 +6,12 @@ const { validationResult } = require('express-validator');
 //GET REQUESTS
 //Controller for seller to retrieve the list of orders he/she  has received
 module.exports.ordersListGET = async (req, res) => {
-    const { userId } = req.locals;
+    const { userId, role } = req.locals;
     try {
-        const orders = await Order.getOrders(userId);
-        res.status(200).json(orders);
+        const orders = await Order.getOrders(userId, role);
+        res.status(200).json({ orders });
     } catch (err) {
+        console.error(err);
         const error = errorHandler(err);
         res.status(400).json({ error });
     }
@@ -21,7 +22,7 @@ module.exports.sellerCatalogGET = async (req, res) => {
     const { userId } = req.locals;
     try {
         const catalog = await Catalog.getCatalogById(userId);
-        res.status(200).send(catalog);
+        res.status(200).json({ catalog });
     } catch (err) {
         const error = errorHandler(err);
         res.status(404).json({ error });
@@ -69,7 +70,7 @@ module.exports.deleteProductFromCatalog = async function (req, res) {
         const { userId } = req.locals;
         const { productId } = req.params;
         const newCatalog = await Catalog.deleteProduct(userId, productId)
-        res.status(200).send(`Product deleted successfully \n ${newCatalog}`)
+        res.status(200).json({ newCatalog })
     } catch (err) {
         const error = errorHandler(err);
         res.status(403).json({ error });
@@ -82,7 +83,7 @@ module.exports.CatalogDELETE = async function (req, res) {
     try {
         const { userId } = req.locals;
         await Catalog.deleteCatalog(userId);
-        res.status(200).send('Catalog deleted successfully')
+        res.status(200).json({ message: 'Catalog deleted successfully' })
     } catch (err) {
         const error = errorHandler(err);
         res.status(403).json({ error });

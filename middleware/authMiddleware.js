@@ -10,7 +10,7 @@ const buyerOnly = async (req, res, next) => {
         jwt.verify(AUTHTOKEN, process.env.JWTSECRET,
             (err, decodedToken) => {
                 if (err || decodedToken.role !== 'buyer') throw new Error();
-                req.locals = { userId: decodedToken._id };
+                req.locals = { userId: decodedToken._id, role: decodedToken.role };
                 next();
             });
     } catch (err) {
@@ -26,7 +26,7 @@ const sellerOnly = async (req, res, next) => {
         jwt.verify(AUTHTOKEN, process.env.JWTSECRET,
             (err, decodedToken) => {
                 if (err || decodedToken.role !== 'seller') throw new Error();
-                req.locals = { userId: decodedToken._id };
+                req.locals = { userId: decodedToken._id, role: decodedToken.role };
                 next();
             });
     } catch (err) {
@@ -41,15 +41,18 @@ const currentUser = async (req, res, next) => {
         res.locals.user = null;
     } else {
         jwt.verify(AUTHTOKEN, process.env.JWTSECRET, async (err, decodedToken) => {
-            if (err) res.locals.user = null;
+            if (err) res.locals = null;
             if (decodedToken) {
                 let user = await User.findById(decodedToken._id);
-                if (!user) res.locals.user = null;
-                res.locals.user = { email: user.email, role: user.role };
-            };
-
+                if (user) {
+                    res.locals = { email: user.email, role: user.role };
+                } else {
+                    res.locals = null;
+                };
+            }
         });
     };
+    // console.log(res.locals.email,res.locals.role);
     next();
 };
 

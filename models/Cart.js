@@ -67,12 +67,12 @@ cartSchema.statics.cartCreation = async function (userId, sellerId, productId, q
 };
 
 //static method that creates orders using products added to cart 
-cartSchema.statics.createOrderUsingCart = async function (id) {
-    const cart = await this.retrieveCart(id);
+cartSchema.statics.createOrderUsingCart = async function (userId) {
+    const cart = await this.retrieveCart(userId);
     for (let i = 0; i < cart.products.length; i++) {
         const { productId, quantity, price } = cart.products[i];
-        const catalog = await cart.getCatalog(productId);
-        const { userId } = catalog;
+        let catalog = await cart.getCatalog(productId);
+        let { sellerId } = catalog;
         //create order
         await Order.pushOrderFromCart(userId, sellerId, productId, quantity, price);
         //retrieveProductIndex from catalog

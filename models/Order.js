@@ -26,14 +26,14 @@ const orderSchema = new mongoose.Schema({
   { timestamps: true });
 
 //static method to get buyer orders
-orderSchema.statics.getOrders = async function (userId) {
+orderSchema.statics.getOrders = async function (userId, role) {
   let order;
-  if (res.locals.user.role === 'buyer') {
+  if (role === 'buyer') {
     order = await this.find({ userId })
       .select('sellerId products bill -_id').lean();
     if (order.length === 0) throw new Error(`Buyer doesn't have any order.`);
   } else {
-    order = await this.find({ sellerId })
+    order = await this.find({ sellerId: userId })
       .select('userId products bill -_id').lean();
     if (order.length === 0) throw new Error(`Seller doesn't have any order.`);
   }

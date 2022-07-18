@@ -1,24 +1,25 @@
 const errHandler = (err) => {
-
     let error;
 
-    // Code for duplicates while registering 
-    //User model error message
+    //duplicate email addresses during registration 
     if (err.code === 11000) {
         error = "User already exists, please input a new email address."
         return error;
     }
-
-    // if (err.message.includes("Cast to ObjectId failed for value")) {
-    //     error = "Invalid Id provided"
-    // }
+    //invalid query parameters
+    if (err.message.includes("Cast to ObjectId failed for value")) {
+        error = "Invalid query parameter provided"
+        return error;
+    }
+    //jsonwebtoken verification error
+    if (err.message.includes('invalid signature')) {
+        error = err.message;
+        return error;
+    }
 
     switch (err.message) {
         //User model error messages
         case 'Email has not been registered.':
-            error = err.message
-            break;
-        case 'Password entered is incorrect.':
             error = err.message
             break;
         case 'Password entered is incorrect.':
@@ -53,12 +54,12 @@ const errHandler = (err) => {
             break;
         case 'Invalid Id provided.':
             error = err.message
-        case `Buyer doesn't have any order with seller.`:
-            error = err.message
         //order model error messages
         case `Buyer doesn't have any order.`:
             error = err.message
             break;
+        case `Buyer doesn't have any order with seller.`:
+            error = err.message
         case `Seller doesn't have any order.`:
             error = err.message
             break;
@@ -71,12 +72,12 @@ const errHandler = (err) => {
         case `Input must be either a product name or Id.`:
             error = err.message
             break;
-        case `Input must contain either a product name or Id.`:
+        case `Input must contain either a productName or productId.`:
             error = err.message
             break;
     }
 
-    //Returning the validationResult from the express-validator package
+    // validationResult from express-validator
     if (err.errors !== undefined) {
         error = err
         return error;

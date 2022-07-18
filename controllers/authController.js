@@ -36,7 +36,7 @@ module.exports.registerPOST = async (req, res) => {
     const user = await User.create({ name, email, gender, password, role, catalog });
     const token = await user.generateJwtToken();
     res.cookie("AUTHTOKEN", token, { httponly: true, expiresIn: process.env.COOKIEEXPIRYDATE });
-    res.status(201).json(`${user.name} has been registered as a ${user.role} successfully`);
+    res.status(201).json({ message: `${user.name} has been registered as a ${user.role} successfully` });
   }
   catch (err) {
     const error = errHandler(err);
@@ -52,7 +52,7 @@ module.exports.loginPOST = async (req, res) => {
     const user = await User.login(email, password);
     const token = await user.generateJwtToken();
     res.cookie("AUTHTOKEN", token, { httponly: true, expiresIn: process.env.COOKIEEXPIRYDATE });
-    res.status(201).json(`${user.name} has been logged in as a ${user.role}`);
+    res.status(201).json({ message: `${user.name} has been logged in as a ${user.role}` });
   }
   catch (err) {
     const error = errHandler(err);
@@ -64,13 +64,13 @@ module.exports.loginPOST = async (req, res) => {
 //Controller for a user to delete account
 module.exports.deleteAccountDELETE = async (req, res) => {
   try {
-    const userId = jwt.verify(req.cookies.AUTHTOKEN, process.env.JWTSECRET, (err, decodedToken) => {
-      if (err) throw new Error(`User isn't logged in.`);
-      return decodedToken._id
-    });
-    await User.deleteAccount(userId);
+    const { AUTHTOKEN } = req.cookies;
+    if (!AUTHTOKEN) throw new Error(`User isn't logged in.`);
+    const verified = jwt.verify(AUTHTOKEN, process.env.JWTSECRET);
+    await User.deleteAccount(verified._id);
     res.clearCookie('AUTHTOKEN');
-    //could have redirected user to homepage
+    //redirect user to homepage
+    //res.redirect('/api/homepage')
     res.status(200).json({ message: 'Account deleted.' });
   } catch (err) {
     const error = errHandler(err);

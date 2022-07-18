@@ -20,7 +20,7 @@ sellerRoute.post('/api/seller/create-catalog', sellerOnly, [
         .isString()
         .withMessage('Product name must be a string')
         .isLength({ min: 3, max: 10 })
-        .withMessage('Character length must be between 3 and 20')
+        .withMessage('Character length must be between 3 and 10')
         .toLowerCase()
         .trim()
     ,

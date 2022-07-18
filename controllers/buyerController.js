@@ -16,7 +16,7 @@ module.exports.allSellersGET = async (req, res) => {
         res.status(404).json({ error });
     }
 };
- 
+
 //Controller for buyer to get all available catalogs 
 module.exports.allCatalogsGET = async (req, res) => {
     //get the catalog of all sellers
@@ -47,7 +47,7 @@ module.exports.cartGET = async (req, res) => {
     const { userId } = req.locals;
     try {
         const cart = await Cart.retrieveCart(userId);
-        res.status(201).send(cart);
+        res.status(201).json({ cart });
     } catch (err) {
         const error = errHandler(err);
         res.status(404).json({ error });
@@ -56,9 +56,9 @@ module.exports.cartGET = async (req, res) => {
 
 //Controller for buyer to get list of products his/her ordered
 module.exports.ordersGET = async (req, res) => {
-    const { userId } = req.locals;
+    const { userId, role } = req.locals;
     try {
-        const orders = await Order.getOrders(userId);
+        const orders = await Order.getOrders(userId, role);
         res.status(200).json(orders);
     } catch (err) {
         const error = errHandler(err);
@@ -88,8 +88,9 @@ module.exports.createOrderUsingCart = async function (req, res) {
     try {
         validationResult(req).throw();
         await Cart.createOrderUsingCart(userId);
-        res.status(201).send(`Order created successfully.`);
+        res.status(201).json({ "message": `Order created successfully.` });
     } catch (err) {
+        console.error(err)
         const error = errHandler(err);
         res.status(404).json({ error });
     }
@@ -106,9 +107,9 @@ module.exports.createOrderPOST = async (req, res) => {
     try {
         validationResult(req).throw();
         if (productId && productName) throw new Error('Input must be either a product name or Id.');
-        if (!productId && !productName) throw new Error('Input must contain either a product name or Id.');
+        if (!productId && !productName) throw new Error('Input must contain either a productName or productId.');
         await Order.createOrder(userId, sellerId, identifier, quantity);
-        res.status(201).send(`Order created successfully.`);
+        res.status(201).json({ message: `Order created successfully.` });
     } catch (err) {
         const error = errHandler(err);
         res.status(404).json({ error });
@@ -123,7 +124,7 @@ module.exports.updateCartPATCH = async (req, res) => {
     try {
         validationResult(req).throw();
         const updatedCart = await Cart.updateCart(userId, productId, quantity);
-        res.status(200).json(updatedCart);
+        res.status(200).json({ updatedCart });
     } catch (err) {
         const error = errHandler(err);
         res.status(404).json({ error });
@@ -149,7 +150,7 @@ module.exports.cartDELETE = async (req, res) => {
     const { userId } = req.locals;
     try {
         await Cart.deleteCart(userId);
-        res.status(200).send('Cart deleted successfully');
+        res.status(200).json({ message: `Cart deleted successfully` });
     } catch (err) {
         const error = errHandler(err);
         res.status(500).json({ error });
@@ -163,7 +164,7 @@ module.exports.orderedProductDELETE = async (req, res) => {
     const { productId } = req.params
     try {
         await Order.deleteOrderedProduct(userId, sellerId, productId);
-        res.status(200).send('Order deleted successfully');
+        res.status(200).json({ message: 'Order deleted successfully' });
     } catch (err) {
         const error = errHandler(err);
         res.status(500).json({ error });
@@ -176,7 +177,7 @@ module.exports.orderDELETE = async (req, res) => {
     const { sellerId } = req.params;
     try {
         await Order.deleteOrders(userId, sellerId);
-        res.status(200).send('Orders deleted successfully');
+        res.status(200).json({ message: 'Orders deleted successfully' });
     } catch (err) {
         const error = errHandler(err);
         res.status(500).json({ error });
@@ -188,7 +189,7 @@ module.exports.allOrdersDELETE = async (req, res) => {
     const { userId } = req.locals;
     try {
         await Order.deleteAllOrders(userId);
-        res.status(200).send('Order deleted successfully');
+        res.status(200).json({ message: 'Orders deleted successfully' });
     } catch (err) {
         const error = errHandler(err);
         res.status(500).json({ error });
