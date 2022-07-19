@@ -78,9 +78,9 @@ buyerRoute.patch('/api/buyer/cart/update', buyerOnly, [
 
 //DELETE REQUESTS
 //Route for the buyer to delete a product already added to cart
-buyerRoute.delete('/api/buyer/cart/:productId', buyerOnly, buyerController.productInCartDELETE);
+buyerRoute.delete('/api/buyer/cart/:productId', buyerOnly, buyerController.productInCartDELETE);    
 
-//Route for the buyer to delete an existing cart
+//Route for the buyer to drop his/her cart
 buyerRoute.delete('/api/buyer/delete-cart', buyerOnly, buyerController.cartDELETE);
 
 //Route for the buyer to cancel a particular product ordered from a seller using the product id and the seller id 

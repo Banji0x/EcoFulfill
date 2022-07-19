@@ -22,9 +22,8 @@ const cartSchema = new mongoose.Schema({
 
 //static method to get seller's catalog using the product Id.
 cartSchema.methods.getCatalog = async function (productId) {
-    const catalog = await Catalog
+    return await Catalog
         .findOne({ 'products._id': productId })
-    return catalog;
 };
 
 //static method to get the cart of the buyer that's currently logged in 

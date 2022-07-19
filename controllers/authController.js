@@ -6,10 +6,12 @@ const jwt = require('jsonwebtoken');
 //GET REQUESTS 
 module.exports.registerGET = (req, res) => {
   // res.render('')
+  res.status(200).json({ message: 'Registration page goes here' })
 };
 
 module.exports.loginGET = (req, res) => {
   // res.render('')
+  res.status(200).json({ message: 'Login page goes here' })
 };
 
 //Controller for user to logout
