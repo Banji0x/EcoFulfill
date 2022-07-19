@@ -11,6 +11,9 @@ RUNNING SERVER
 
 1. Run 'npm run server' in terminal to start project
 
+TESTING ROUTES 
+1. Use an app like POSTMAN or an extension like Thunder Client in Vscode to test routes
+
 ROUTES
 
 1. Authentication
