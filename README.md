@@ -14,11 +14,11 @@ RUNNING SERVER
 ROUTES
 
 1. Authentication
-   a. Route for new users to register
+   i. Route for new users to register
    Route: `/api/auth/register`
    GET -> Registration page
    POST -> Valid inputs are name,email,gender,password,role
-   b. Route for users to login
+   1. Route for users to login
    Route: `/api/auth/login`
    GET -> Login page
    POST -> Valid inputs are name,password
