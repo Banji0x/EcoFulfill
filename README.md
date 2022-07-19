@@ -14,83 +14,83 @@ RUNNING SERVER
 ROUTES
 
 1. Authentication
-   i. Route for new users to register
+   1. Route for new users to register
    Route: `/api/auth/register`
    GET -> Registration page
    POST -> Valid inputs are name,email,gender,password,role
-   1. Route for users to login
+   2. Route for users to login
    Route: `/api/auth/login`
    GET -> Login page
    POST -> Valid inputs are name,password
-   c. Route for logged in users to logout
+   3. Route for logged in users to logout
    Route: `/api/auth/logout`
    GET -> Logout user
-   d. Route for logged in users to delete account
+   4. Route for logged in users to delete account
    Route: `/api/auth/delete`
    DELETE -> delete logged in user account
 
 2. Buyer
-   a. Route to get all sellers
+   1. Route to get all sellers
    Route: `/api/buyer/list-of-sellers`
    GET -> get all seller's names and email addresses
-   b. Route to get all catalogs
+   2. Route to get all catalogs
    Route: `/api/buyer/catalogs`
    GET -> get all available catalogs
-   c. Route to get a seller's catalog
+   3. Route to get a seller's catalog
    Route: `/api/buyer/seller-catalog/:sellerId`
    GET -> get a seller's catalog using his/her id
-   d. Route to retrieve buyer's cart
+   4. Route to retrieve buyer's cart
    Route: `/api/buyer/cart`
    GET -> get the cart of the buyer currently logged in
-   e. Route to add products to cart
+   5. Route to add products to cart
    Route: `/api/buyer/create-cart/:sellerId`
    POST -> valid inputs are productId,quantity
-   f. Route to update buyer's cart
+   6. Route to update buyer's cart
    Route: `/api/buyer/cart/update`
    PATCH -> update the quantity of product in cart
    valid inputs are productId,quantity
-   g. Route to delete products in buyer's cart'
+   7. Route to delete products in buyer's cart'
    Route: `/api/buyer/cart/:productId`
    DELETE -> delete products already in buyer's cart using a productId
-   h. Route for buyer to drop his/her cart
+   8. Route for buyer to drop his/her cart
    Route: `/api/buyer/delete-cart`
    DELETE -> delete an exisiting cart
-   i. Route to get the list of products ordered
+   9. Route to get the list of products ordered
    Route: `/api/buyer/orders`
    GET -> get orders
-   j. Route to checkout products already added in cart
+   10. Route to checkout products already added in cart
    Route: `/api/buyer/push-orders`
    POST -> checkout products already added to cart
-   k. Route to create new orders with a seller using seller's id.
+   11. Route to create new orders with a seller using seller's id.
    Route: `/api/buyer/create-order/:sellerId`
    POST -> Valid inputs are sellerId,the product id or product name and quantity
-   l. Route to cancel a product purchase
+   12. Route to cancel a product purchase
    Route: `/api/buyer/orders/:sellerId/:productId`
    DELETE -> delete a product from orders using the sellerId and productId
-   m. Route to cancel all products purchase from a seller
+   13. Route to cancel all products purchase from a seller
    Route: `/api/buyer/orders/:sellerId`
    DELETE -> delete the order document associated with the buyer and seller
-   n. Route to cancel all products purchase from all sellers
+   14. Route to cancel all products purchase from all sellers
    Route: `/api/buyer/cancel-orders`
    DELETE -> delete the order document associated with the buyer
 
 3. Seller
-   a. Route for seller to get his/her catalog
+   1. Route for seller to get his/her catalog
    Route: `/api/seller/catalog`
    GET -> get the catalog associated with the seller
-   b. Route to get orders
+   2. Route to get orders
    Route: `/api/seller/orders`
    GET -> get the list of products ordered
-   c. Route for seller to add products to a new/existing catalog
+   4. Route for seller to add products to a new/existing catalog
    Route: `/api/seller/create-catalog`
    POST -> valid inputs are: name,quantity,price,category,description
-   d. Route to update a product
+   4. Route to update a product
    Route: `/api/seller/catalog/:productId`
    PATCH -> update a product name||quantity||price||category||description
-   e. Route to delete a product from seller's catalog
+   5. Route to delete a product from seller's catalog
    Route: `/api/seller/catalog/:productId`
    DELETE -> delete a product from seller's catalog using the the product id
-   f. Route to delete catalog
+   6. Route to delete catalog
    Route: `/api/seller/delete-catalog`
    DELETE -> delete catalog document
 
