@@ -1,9 +1,3 @@
-ABOUT
-A simple Rest api for an ecommerce website with CRUD functionalities
-Language: JavaScript
-Server: Express on node.js
-Database: MongoDB using mongoose for modeling
-
 SETUP
 
 1. Download repository from github
